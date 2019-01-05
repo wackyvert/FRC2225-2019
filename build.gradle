@@ -1,0 +1,7 @@
+plugins {
+	id "idea"     
+}
+
+wrapper {
+    gradleVersion = '5.0'
+}

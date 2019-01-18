@@ -1,5 +1,7 @@
 package frc.team2225.robot;
 
+import java.util.function.Function;
+
 /**
  * A mutable representation of a vector in 2D space with various utility methods for vector math.
  * Note: for performance reasons, most methods change the vector they are called on, they do NOT create a new object.
@@ -37,6 +39,12 @@ public class Vector2D {
         this.y = vector.y;
     }
 
+    public Vector2D transformComponents(Function<Double, Double> transform) {
+        x = transform.apply(x);
+        y = transform.apply(y);
+        return this;
+    }
+
     /**
      * Creates a Vector2D with the specified magnitude and direction
      *
@@ -72,7 +80,7 @@ public class Vector2D {
      *
      * @param angle angle in radians by which to rotate vector counter-clockwise.
      */
-    public void rotate(double angle) {
+    public Vector2D rotate(double angle) {
         double cosA = Math.cos(angle);
         double sinA = Math.sin(angle);
         double[] out = new double[2];
@@ -80,6 +88,7 @@ public class Vector2D {
         out[1] = x * sinA + y * cosA;
         x = out[0];
         y = out[1];
+        return this;
     }
 
     /**

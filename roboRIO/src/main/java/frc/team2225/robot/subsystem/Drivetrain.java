@@ -26,6 +26,8 @@ public class Drivetrain extends Subsystem {
     public static final double _motorRotsPerWheelRot = 16;
     public static final int _countsPerMotorRot = 40;
     
+    public static final int deadZone = 100;
+    
     public TalonSRX[] motors;
     public ADXRS450_Gyro gyro;
 
@@ -77,15 +79,20 @@ public class Drivetrain extends Subsystem {
         setMotorVoltage(fl, fr, bl, br);
     }
     
-    private double cmToCounts(double cm) {
-        return cm / _wheelCircumferenceCm * _motorRotsPerWheelRot * _countsPerMotorRot;
+    private int cmToCounts(double cm) {
+        return (int)(cm / _wheelCircumferenceCm * _motorRotsPerWheelRot * _countsPerMotorRot);
     }
     
-    public void translate(Vector2D v){
-        motorOf(FRONT_LEFT).set(ControlMode.Position, motorOf(FRONT_LEFT).getSelectedSensorPosition() + cmToCounts(v.dot(frontLeftVec)));
-        motorOf(FRONT_RIGHT).set(ControlMode.Position, motorOf(FRONT_RIGHT).getSelectedSensorPosition() + cmToCounts(v.dot(frontRightVec)));
-        motorOf(BACK_LEFT).set(ControlMode.Position, motorOf(BACK_LEFT).getSelectedSensorPosition() + cmToCounts(v.dot(backLeftVec)));
-        motorOf(BACK_RIGHT).set(ControlMode.Position, motorOf(BACK_RIGHT).getSelectedSensorPosition() + cmToCounts(v.dot(backRightVec)));
+    public CheckPosition translate(Vector2D v){
+        int fl = motorOf(FRONT_LEFT).getSelectedSensorPosition() + cmToCounts(v.dot(frontLeftVec));
+        int fr = motorOf(FRONT_RIGHT).getSelectedSensorPosition() + cmToCounts(v.dot(frontRightVec));
+        int bl = motorOf(BACK_LEFT).getSelectedSensorPosition() + cmToCounts(v.dot(backLeftVec));
+        int br = motorOf(BACK_RIGHT).getSelectedSensorPosition() + cmToCounts(v.dot(backRightVec));
+        motorOf(FRONT_LEFT).set(ControlMode.Position, fl);
+        motorOf(FRONT_RIGHT).set(ControlMode.Position, fr);
+        motorOf(BACK_LEFT).set(ControlMode.Position, bl);
+        motorOf(BACK_RIGHT).set(ControlMode.Position, br);
+        return new CheckPosition(fl, fr, bl, br, deadZone);
     }
 
     public void setMotorVoltage(double fl, double fr, double bl, double br) {
@@ -99,4 +106,32 @@ public class Drivetrain extends Subsystem {
     protected void initDefaultCommand() {
         setDefaultCommand(new Teleop());
     }
+    
+    public class CheckPosition{
+    
+        private final int deadZone;
+        int fl, fr, bl, br;
+        
+        CheckPosition(int fl, int fr, int bl, int br, int deadZone){
+            this.fl = fl;
+            this.fr = fr;
+            this.bl = bl;
+            this.br = br;
+            this.deadZone = deadZone;
+        }
+        
+        public boolean isDone(){
+            if(Math.abs(fl - motorOf(FRONT_LEFT).getSelectedSensorPosition()) <= deadZone){
+                if(Math.abs(fr - motorOf(FRONT_RIGHT).getSelectedSensorPosition()) <= deadZone){
+                    if(Math.abs(bl - motorOf(BACK_LEFT).getSelectedSensorPosition()) <= deadZone){
+                        return Math.abs(br - motorOf(BACK_RIGHT).getSelectedSensorPosition()) <= deadZone;
+                    }
+                }
+            }
+            return false;
+        }
+        
+    }
+    
+    
 }

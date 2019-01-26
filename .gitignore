@@ -56,3 +56,11 @@ hs_err_pid*
 *.exe
 *.out
 *.app
+
+*.iml
+*.ipr
+*.iws
+.gradle
+.idea
+
+build

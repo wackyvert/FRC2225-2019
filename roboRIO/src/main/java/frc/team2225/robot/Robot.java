@@ -2,11 +2,8 @@ package frc.team2225.robot;
 
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.command.Scheduler;
 import frc.team2225.robot.subsystem.Drivetrain;
-
-import javax.swing.*;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -23,7 +20,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotInit() {
-        drivetrain = new Drivetrain(6, 2, 5, 4, SPI.Port.kOnboardCS0);
+    drivetrain = new Drivetrain(4, 5, 2, 6, SPI.Port.kOnboardCS0);
   }
 
   /**
@@ -36,6 +33,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    Scheduler.getInstance().run();
   }
 
   /**

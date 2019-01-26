@@ -2,10 +2,9 @@ package frc.team2225.robot.command;
 
 import edu.wpi.first.wpilibj.command.Command;
 
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.List;
 
-public class Subroutine extends Command {
+public abstract class Subroutine extends Command {
     private Stage[] stages;
     private boolean isFinished = false;
     private int stageIndex = 0;
@@ -13,6 +12,7 @@ public class Subroutine extends Command {
     @Override
     protected void initialize() {
         stages[0].init();
+        this.stages = (Stage[]) getStages().toArray();
     }
 
     @Override
@@ -37,31 +37,24 @@ public class Subroutine extends Command {
         }
     }
 
-    public Subroutine(Stage[] stages) {
-        this.stages = stages;
-    }
+    public abstract List<Stage> getStages();
 
     @Override
     protected boolean isFinished() {
         return isFinished;
     }
 
-    class Stage {
-        Runnable init;
-        Runnable execute;
-        Runnable finish;
-        Supplier<Boolean> isDone;
+    interface Stage {
 
-        public Stage(Runnable init, Runnable execute, Runnable finish, Supplier<Boolean> isDone) {
-            this.init = init;
-            this.execute = execute;
-            this.finish = finish;
+        default void init() {
         }
 
-        void init() {init.run();}
-        void execute() {execute.run();}
-        void finish() {finish.run();}
+        default void execute() {
+        }
 
-        boolean isDone() {return isDone.get();}
+        default void finish() {
+        }
+
+        boolean isDone();
     }
 }

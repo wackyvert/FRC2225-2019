@@ -9,7 +9,7 @@ deploy {
     targets {
         target("jetson") {
             directory = '/home/nvidia/'       // Note: must be an absolute path
-            failOnMissing = true   // Just in case our coprocessor is missing. Optional.
+            failOnMissing = false   // Just in case our coprocessor is missing. Optional.
 
             locations {
                 ssh {
@@ -46,7 +46,9 @@ model {
             eachPlatform {
                 // Defining my gcc, ar, g++, etc binaries to use the 'arm-linux-gnueabihf' prefix, with no suffix.
                 // This is the prefix the Raspberry Pi uses, but may be different for your coprocessor.
-                
+                cCompiler.executable = 'aarch64-linux-gnu-gcc'
+                cppCompiler.executable = 'aarch64-linux-gnu-g++'
+                linker.executable = 'aarch64-linux-gnu-ld'
 
                 // Here we're just simply telling Gradle that we want to compile with C++11.
                 linker.withArguments { a -> a << '-std=c++11'}
@@ -54,7 +56,7 @@ model {
             // Here I'm telling Gradle where my toolchain is located. In this case, it is relative to my project directory.
             // The path given MUST be absolute.
             // Your tools will have to be a clone of https://github.com/raspberrypi/tools in your home directory.
-            path(project.file('/usr/local/bin').absolutePath)
+            path('/usr/local/bin')
         }
     }
     components {

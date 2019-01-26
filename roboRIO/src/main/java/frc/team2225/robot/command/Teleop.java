@@ -17,7 +17,7 @@ public class Teleop extends Command {
 
     @Override
     protected void execute() {
-        Vector2D translate = new Vector2D(joystick.getX(GenericHID.Hand.kLeft), joystick.getY(GenericHID.Hand.kLeft));
+        Vector2D translate = new Vector2D(joystick.getX(GenericHID.Hand.kLeft), -joystick.getY(GenericHID.Hand.kLeft));
         translate.transformComponents(ScaleInputs::scaleInputs);
         double rotate = joystick.getX(GenericHID.Hand.kRight);
         rotate = ScaleInputs.scaleInputs(rotate);

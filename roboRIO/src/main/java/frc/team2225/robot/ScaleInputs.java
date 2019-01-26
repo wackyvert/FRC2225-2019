@@ -1,6 +1,6 @@
 package frc.team2225.robot;
 
-public final class  ScaleInputs {
+public final class ScaleInputs {
     private ScaleInputs() {}
 
     /**
@@ -46,7 +46,7 @@ public final class  ScaleInputs {
      * Adds a pad to the value
      * This scales the values from [0, 1] to [0, 1 - pad]
      * If the pad is included, then the output is [pad, 1]
-     * @param pad The size o    f the pad
+     * @param pad The size of the pad
      * @param value The input value
      * @param includePad Whether to add the pad to the result
      * @return The scaled value

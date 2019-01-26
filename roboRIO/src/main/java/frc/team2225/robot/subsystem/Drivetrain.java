@@ -21,9 +21,10 @@ public class Drivetrain extends Subsystem {
     public static final Vector2D frontRightVec = new Vector2D(-Math.sqrt(2) / 2, Math.sqrt(2) / 2);
     public static final Vector2D backLeftVec = new Vector2D(-Math.sqrt(2) / 2, Math.sqrt(2) / 2);
     public static final Vector2D backRightVec = new Vector2D(Math.sqrt(2) / 2, Math.sqrt(2) / 2);
-    public static final double _wheelCircumferenceCm = 1;
-    public static final double _motorRotsPerWheelRot = 1;
-    public static final int _countsPerMotorRot = 1;
+
+    public static final double _wheelCircumferenceCm = 6 * 2.54 * Math.PI;
+    public static final double _motorRotsPerWheelRot = 16;
+    public static final int _countsPerMotorRot = 40;
     
     public TalonSRX[] motors;
     public ADXRS450_Gyro gyro;

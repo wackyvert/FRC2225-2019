@@ -9,7 +9,7 @@ import frc.team2225.robot.ScaleInputs;
 import frc.team2225.robot.Vector2D;
 
 public class Teleop extends Command {
-    XboxController joystick;
+    static XboxController joystick;
 
     public Teleop() {
         requires(Robot.drivetrain);
@@ -24,19 +24,8 @@ public class Teleop extends Command {
         rotate = ScaleInputs.scaleInputs(rotate);
         Robot.drivetrain.omniDrive(translate, rotate);
 
-        if (joystick.getAButton()) {
-            if (joystick.getBButtonPressed()) {
-                BallPlace bP = new BallPlace(false, true);
-                bP.start();
-            }
-            else if (joystick.getAButtonPressed()) {
-                BallPlace bP = new BallPlace(true, false);
-                bP.start();
-            }
-            else {
-                BallPlace bP = new BallPlace(false, false);
-                bP.start();
-            }
+        if (joystick.getAButtonPressed()) {
+            BallPlace bP = new BallPlace(false,false, 1);
         }
     }
 

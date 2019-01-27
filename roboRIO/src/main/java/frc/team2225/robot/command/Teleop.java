@@ -24,16 +24,16 @@ public class Teleop extends Command {
         rotate = ScaleInputs.scaleInputs(rotate);
         Robot.drivetrain.omniDrive(translate, rotate);
 
-        if (joystick.getY(GenericHID.Hand.kLeft) < 0) {
+        if (joystick.getXButtonPressed()) {
             Robot.rollerIntake.grab(true);
         }
 
-        if (joystick.getY(GenericHID.Hand.kLeft) == 0) {
+        if (joystick.getBButtonPressed()) {
             Robot.rollerIntake.grab(false);
             Robot.rollerIntake.push(false);
         }
 
-        if (joystick.getY(GenericHID.Hand.kLeft) > 0) {
+        if (joystick.getYButtonPressed()) {
             Robot.rollerIntake.push(true);
         }
 

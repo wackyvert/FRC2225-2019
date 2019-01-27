@@ -24,7 +24,7 @@ public class BallPlace extends Command{
     protected void initialize() {
         //TODO: Set elevator height to high, medium or low; parameters will need to be added for that
 
-        Robot.drivetrain.translate(new Vector2D(0, 10));
+        Robot.drivetrain.omniDrive(new Vector2D(0, 10), 0);
 
         if (height == 1) {
             //set to lowest height
@@ -54,7 +54,7 @@ public class BallPlace extends Command{
         }
 
         Robot.rollerIntake.push(false);
-        Robot.drivetrain.translate(new Vector2D(0, -10));
+        Robot.drivetrain.omniDrive(new Vector2D(0, -10), 0);
         //TODO: Set elevator height back
 
         isFinished = true;

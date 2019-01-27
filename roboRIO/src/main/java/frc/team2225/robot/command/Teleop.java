@@ -39,6 +39,7 @@ public class Teleop extends Command {
 
         if (joystick.getAButtonPressed()) {
             BallPlace bP = new BallPlace(false,false, 1);
+            bP.start();
         }
     }
 

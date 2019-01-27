@@ -1,6 +1,7 @@
 package frc.team2225.robot.command;
 
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.InterruptableSensorBase;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.command.Command;
 import frc.team2225.robot.Robot;
@@ -22,6 +23,21 @@ public class Teleop extends Command {
         double rotate = joystick.getX(GenericHID.Hand.kRight);
         rotate = ScaleInputs.scaleInputs(rotate);
         Robot.drivetrain.omniDrive(translate, rotate);
+
+        if (joystick.getAButton()) {
+            if (joystick.getBButtonPressed()) {
+                BallPlace bP = new BallPlace(false, true);
+                bP.start();
+            }
+            else if (joystick.getAButtonPressed()) {
+                BallPlace bP = new BallPlace(true, false);
+                bP.start();
+            }
+            else {
+                BallPlace bP = new BallPlace(false, false);
+                bP.start();
+            }
+        }
     }
 
     @Override

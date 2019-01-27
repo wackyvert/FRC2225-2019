@@ -8,6 +8,7 @@ import frc.team2225.robot.Vector2D;
 public class BallPlace extends Command{
     boolean curveLeft;
     boolean curveRight;
+    boolean isFinished = false;
 
     public BallPlace(boolean curveLeft, boolean curveRight) {
         requires(Robot.rollerIntake);
@@ -42,6 +43,8 @@ public class BallPlace extends Command{
         Robot.rollerIntake.push(false);
         Robot.drivetrain.translate(new Vector2D(0, -10));
         //TODO: Set elevator height back
+
+        isFinished = true;
     }
 
     @Override
@@ -50,7 +53,7 @@ public class BallPlace extends Command{
 
     @Override
     protected boolean isFinished() {
-        return false;
+        return isFinished;
     }
 }
 

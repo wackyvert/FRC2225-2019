@@ -24,6 +24,19 @@ public class Teleop extends Command {
         rotate = ScaleInputs.scaleInputs(rotate);
         Robot.drivetrain.omniDrive(translate, rotate);
 
+        if (joystick.getY(GenericHID.Hand.kLeft) < 0) {
+            Robot.rollerIntake.grab(true);
+        }
+
+        if (joystick.getY(GenericHID.Hand.kLeft) == 0) {
+            Robot.rollerIntake.grab(false);
+            Robot.rollerIntake.push(false);
+        }
+
+        if (joystick.getY(GenericHID.Hand.kLeft) > 0) {
+            Robot.rollerIntake.push(true);
+        }
+
         if (joystick.getAButtonPressed()) {
             BallPlace bP = new BallPlace(false,false, 1);
         }

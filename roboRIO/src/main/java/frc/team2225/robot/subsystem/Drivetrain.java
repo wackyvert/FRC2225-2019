@@ -25,9 +25,11 @@ public class Drivetrain extends Subsystem {
     public static final double _wheelCircumferenceCm = 6 * 2.54 * Math.PI;
     public static final double _motorRotsPerWheelRot = 16;
     public static final int _countsPerMotorRot = 40;
-    
+
     public static final int deadZone = 100;
-    
+    int resetTargetRot;
+    double targetRot;
+
     public TalonSRX[] motors;
     public ADXRS450_Gyro gyro;
 
@@ -38,7 +40,7 @@ public class Drivetrain extends Subsystem {
         motors[BACK_LEFT.ordinal()] = new TalonSRX(backLeft);
         motors[BACK_RIGHT.ordinal()] = new TalonSRX(backRight);
         this.gyro = new ADXRS450_Gyro(gyro);
-
+        targetRot = 0;
         motorOf(FRONT_RIGHT).setInverted(true);
         motorOf(BACK_RIGHT).setInverted(true);
         motorOf(FRONT_LEFT).setInverted(false);
@@ -65,24 +67,40 @@ public class Drivetrain extends Subsystem {
 
     public void omniDrive(Vector2D translate, double rotateIn) {
         translate.mapSquareToDiamond().divide(Math.sqrt(2) / 2);
+        final double p = 1.0/150.0;
         double fr, fl, br, bl;
         fl = translate.dot(frontLeftVec);
         fr = translate.dot(frontRightVec);
         bl = translate.dot(backLeftVec);
         br = translate.dot(backRightVec);
 
-        fl = ScaleInputs.padMinValue(rotateIn, fl, false) + rotateIn;
-        fr = ScaleInputs.padMinValue(rotateIn, fr, false) - rotateIn;
-        bl = ScaleInputs.padMinValue(rotateIn, bl, false) + rotateIn;
-        br = ScaleInputs.padMinValue(rotateIn, br, false) - rotateIn;
+        double rotate = 0;
+        if(rotateIn != 0) {
+            resetTargetRot = 10;
+            rotate = -rotateIn;
+        }
+        if(resetTargetRot > 0) {
+            targetRot = gyro.getAngle();
+            resetTargetRot--;
+        }
+        if(rotateIn == 0) {
+            double pTerm = resetTargetRot > 0 ? 0 : (gyro.getAngle() - targetRot) * p;
+            rotate = pTerm;
+            rotate = Math.max(-1, Math.min(rotate, 1));
+        }
+        fl = ScaleInputs.padMinValue(rotate, fl, false) + rotate;
+        fr = ScaleInputs.padMinValue(rotate, fr, false) - rotate;
+        bl = ScaleInputs.padMinValue(rotate, bl, false) + rotate;
+        br = ScaleInputs.padMinValue(rotate, br, false) - rotate;
 
         setMotorVoltage(fl, fr, bl, br);
+
     }
-    
+
     private int cmToCounts(double cm) {
         return (int)(cm / _wheelCircumferenceCm * _motorRotsPerWheelRot * _countsPerMotorRot);
     }
-    
+
     public CheckPosition translate(Vector2D v){
         int fl = motorOf(FRONT_LEFT).getSelectedSensorPosition() + cmToCounts(v.dot(frontLeftVec));
         int fr = motorOf(FRONT_RIGHT).getSelectedSensorPosition() + cmToCounts(v.dot(frontRightVec));
@@ -106,12 +124,12 @@ public class Drivetrain extends Subsystem {
     protected void initDefaultCommand() {
         setDefaultCommand(new Teleop());
     }
-    
+
     public class CheckPosition{
-    
+
         private final int deadZone;
         int fl, fr, bl, br;
-        
+
         CheckPosition(int fl, int fr, int bl, int br, int deadZone){
             this.fl = fl;
             this.fr = fr;
@@ -119,7 +137,7 @@ public class Drivetrain extends Subsystem {
             this.br = br;
             this.deadZone = deadZone;
         }
-        
+
         public boolean isDone(){
             if(Math.abs(fl - motorOf(FRONT_LEFT).getSelectedSensorPosition()) <= deadZone){
                 if(Math.abs(fr - motorOf(FRONT_RIGHT).getSelectedSensorPosition()) <= deadZone){
@@ -130,8 +148,8 @@ public class Drivetrain extends Subsystem {
             }
             return false;
         }
-        
+
     }
-    
-    
+
+
 }

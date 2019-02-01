@@ -2,19 +2,20 @@ package frc.team2225.robot.command;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.command.Subsystem;
 
 public class HookActuate extends Subsystem {
     
-    TalonSRX motor;
+    VictorSP motor;
     final double speed = 1;
     
-    HookActuate(TalonSRX t){
+    HookActuate(VictorSP t){
         motor = t;
     }
     
     public void move(double input){
-        motor.set(ControlMode.PercentOutput, Math.signum(input));
+        motor.set(Math.signum(input * speed));
     }
     
     

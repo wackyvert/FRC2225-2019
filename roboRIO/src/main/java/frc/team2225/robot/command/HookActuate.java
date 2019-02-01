@@ -10,8 +10,8 @@ public class HookActuate extends Subsystem {
     VictorSP motor;
     final double speed = 1;
     
-    HookActuate(VictorSP t){
-        motor = t;
+    HookActuate(int port){
+        motor = new VictorSP(port);
     }
     
     public void move(double input){

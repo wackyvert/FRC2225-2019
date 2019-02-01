@@ -24,4 +24,4 @@ pluginManagement {
     }
 }
 
-include "roboRIO", "jetson"
+include "roboRIO"

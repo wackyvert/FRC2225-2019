@@ -8,11 +8,10 @@ import frc.team2225.robot.ScaleInputs;
 import frc.team2225.robot.Vector2D;
 
 public class Teleop extends Command {
-    XboxController joystick;
+    private static XboxController joystick = new XboxController(0);
 
     public Teleop() {
         requires(Robot.drivetrain);
-        joystick = new XboxController(0);
     }
 
     @Override

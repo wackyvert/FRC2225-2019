@@ -3,6 +3,8 @@ package frc.team2225.robot;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Scheduler;
+import frc.team2225.robot.command.MoveForward;
+import frc.team2225.robot.command.Teleop;
 import frc.team2225.robot.subsystem.Drivetrain;
 import frc.team2225.robot.subsystem.UltrasonicSensor;
 
@@ -69,6 +71,16 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
 
+  }
+
+  @Override
+  public void teleopInit() {
+    new Teleop().start();
+  }
+
+  @Override
+  public void testInit() {
+    new MoveForward().start();
   }
 
   /**

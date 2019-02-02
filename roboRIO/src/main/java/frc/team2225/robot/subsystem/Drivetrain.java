@@ -4,11 +4,14 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.command.Subsystem;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.team2225.robot.ScaleInputs;
 import frc.team2225.robot.Vector2D;
 import frc.team2225.robot.command.Teleop;
@@ -34,6 +37,54 @@ public class Drivetrain extends Subsystem {
     int resetTargetRot;
     double targetRot;
     PID pidWrite = new PID();
+
+    public int resetTargetRot;
+    public double targetRot;
+
+    // Units: counts / 100ms
+    public static final int maxVelocity = 100;
+
+    public static final double fGain = 1023.0 / maxVelocity;
+
+    // Cruise Velocity = Max Velocity * 30%
+    public static final int cruiseVelocity = 30;
+
+    //Accelerate to cruise in 1 second
+    public static final int acceleration = cruiseVelocity;
+
+    private ShuffleboardTab tab = Shuffleboard.getTab("Drivetrain");
+    private NetworkTableEntry pChooser = tab.add("kP", 0).getEntry();
+    private NetworkTableEntry iChooser = tab.add("kI", 0).getEntry();
+    private NetworkTableEntry dChooser = tab.add("kD", 0).getEntry();
+
+    public double kP = 0;
+    public double kI = 0;
+    public double kD = 0;
+
+    @Override
+    public void periodic() {
+        if (kP != pChooser.getDouble(0)) {
+            kP = pChooser.getDouble(0);
+            for (TalonSRX motor : motors) {
+                motor.config_kP(0, kP);
+            }
+        }
+
+        if (kI != iChooser.getDouble(0)) {
+            kI = iChooser.getDouble(0);
+            for (TalonSRX motor : motors) {
+                motor.config_kI(0, kI);
+            }
+        }
+
+        if (kD != dChooser.getDouble(0)) {
+            kD = dChooser.getDouble(0);
+            for (TalonSRX motor : motors) {
+                motor.config_kD(0, kD);
+            }
+        }
+    }
+  
     public TalonSRX[] motors;
     public ADXRS450_Gyro gyro;
     final PIDController turnController;
@@ -46,25 +97,30 @@ public class Drivetrain extends Subsystem {
         final double I= 0, P=0, D = 0;
         this.gyro = new ADXRS450_Gyro(gyro);
         turnController = new PIDController(P,I,D, this.gyro, pidWrite);
+
+        for (TalonSRX motor : motors) {
+            motor.configFactoryDefault();
+            motor.setNeutralMode(NeutralMode.Brake);
+            motor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder);
+            motor.configNominalOutputForward(0.0);
+            motor.configNominalOutputReverse(0.0);
+            motor.configPeakOutputForward(1);
+            motor.configPeakOutputReverse(-1);
+
+            motor.selectProfileSlot(0, 0);
+            motor.config_kP(0, kP);
+            motor.config_kI(0, kI);
+            motor.config_kD(0, kD);
+            motor.config_IntegralZone(0, 0);
+
+            motor.configMotionCruiseVelocity(cruiseVelocity);
+            motor.configMotionAcceleration(acceleration);
+        }
         targetRot = 0;
         motorOf(FRONT_RIGHT).setInverted(true);
         motorOf(BACK_RIGHT).setInverted(true);
         motorOf(FRONT_LEFT).setInverted(false);
         motorOf(BACK_LEFT).setInverted(false);
-
-        for(TalonSRX motor : motors) {
-            motor.setNeutralMode(NeutralMode.Brake);
-            motor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 0);
-            motor.configNominalOutputForward(0.0, 0);
-            motor.configNominalOutputReverse(0.0, 0);
-            motor.configPeakOutputForward(1, 0);
-            motor.configPeakOutputReverse(-1, 0);
-            motor.configClosedloopRamp(0.4, 0);
-            motor.config_kP(0, 0.5, 0);
-            motor.config_kI(0, 0, 0);
-            motor.config_kD(0, 2, 0);
-            motor.config_IntegralZone(0, 0, 0);
-        }
     }
 
     public TalonSRX motorOf(Position position) {
@@ -102,7 +158,6 @@ public class Drivetrain extends Subsystem {
         br = ScaleInputs.padMinValue(rotateIn, br, false) - rotateIn;
 
         setMotorVoltage(fl, fr, bl, br);
-
     }
 
     private int cmToCounts(double cm) {

@@ -3,7 +3,10 @@ package frc.team2225.robot;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Scheduler;
+import frc.team2225.robot.command.MoveForward;
+import frc.team2225.robot.command.Teleop;
 import frc.team2225.robot.subsystem.Drivetrain;
+import frc.team2225.robot.subsystem.UltrasonicSensor;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -14,6 +17,7 @@ import frc.team2225.robot.subsystem.Drivetrain;
  */
 public class Robot extends TimedRobot {
   public static Drivetrain drivetrain;
+  public static UltrasonicSensor ultrasonicSensor;
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
@@ -21,6 +25,7 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     drivetrain = new Drivetrain(4, 5, 2, 6, SPI.Port.kOnboardCS0);
+    ultrasonicSensor = new UltrasonicSensor(0);
   }
 
   /**
@@ -66,6 +71,16 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopPeriodic() {
 
+  }
+
+  @Override
+  public void teleopInit() {
+    new Teleop().start();
+  }
+
+  @Override
+  public void testInit() {
+    new MoveForward().start();
   }
 
   /**

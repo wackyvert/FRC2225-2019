@@ -5,7 +5,7 @@ import edu.wpi.first.wpilibj.command.Subsystem;
 
 public class UltrasonicSensor extends Subsystem {
     AnalogInput sensorPort;
-    final double scalar = 50;
+    final double scalar = 50 * 2.54;
 
     public UltrasonicSensor(int portNumber) {
         sensorPort = new AnalogInput(0);

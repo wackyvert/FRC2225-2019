@@ -14,6 +14,8 @@ import frc.team2225.robot.command.Teleop;
 import static frc.team2225.robot.subsystem.Drivetrain.Position.*;
 
 public class Drivetrain extends Subsystem {
+    int P, I, D = 1;
+    int integral, previous_error, setpoint = 0;
     public enum Position {
         FRONT_LEFT, FRONT_RIGHT, BACK_LEFT, BACK_RIGHT
     }
@@ -39,6 +41,7 @@ public class Drivetrain extends Subsystem {
         motors[FRONT_RIGHT.ordinal()] = new TalonSRX(frontRight);
         motors[BACK_LEFT.ordinal()] = new TalonSRX(backLeft);
         motors[BACK_RIGHT.ordinal()] = new TalonSRX(backRight);
+        public final PIDController PID;
         this.gyro = new ADXRS450_Gyro(gyro);
         targetRot = 0;
         motorOf(FRONT_RIGHT).setInverted(true);
@@ -73,25 +76,17 @@ public class Drivetrain extends Subsystem {
         fr = translate.dot(frontRightVec);
         bl = translate.dot(backLeftVec);
         br = translate.dot(backRightVec);
+        PID = new PIDController(kP, kI, kD, gyro, this);
 
-        double rotate = 0;
-        if(rotateIn != 0) {
-            resetTargetRot = 10;
-            rotate = -rotateIn;
-        }
-        if(resetTargetRot > 0) {
-            targetRot = gyro.getAngle();
-            resetTargetRot--;
-        }
-        if(rotateIn == 0) {
-            double pTerm = resetTargetRot > 0 ? 0 : (gyro.getAngle() - targetRot) * p;
-            rotate = pTerm;
-            rotate = Math.max(-1, Math.min(rotate, 1));
-        }
-        fl = ScaleInputs.padMinValue(rotate, fl, false) + rotate;
-        fr = ScaleInputs.padMinValue(rotate, fr, false) - rotate;
-        bl = ScaleInputs.padMinValue(rotate, bl, false) + rotate;
-        br = ScaleInputs.padMinValue(rotate, br, false) - rotate;
+        PID.setInputRange(180.0f, -180.0f);
+        PID.setOutputRange(.45, -.45);
+        PID.setAbsoluteTolerance(2.0f);
+        PID.setContinuous();
+
+        fl = ScaleInputs.padMinValue(rotateIn, fl, false) + rotateIn;
+        fr = ScaleInputs.padMinValue(rotateIn, fr, false) - rotateIn;
+        bl = ScaleInputs.padMinValue(rotateIn, bl, false) + rotateIn;
+        br = ScaleInputs.padMinValue(rotateIn, br, false) - rotateIn;
 
         setMotorVoltage(fl, fr, bl, br);
 

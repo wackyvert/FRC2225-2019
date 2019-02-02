@@ -5,6 +5,8 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.PIDController;
+import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import frc.team2225.robot.ScaleInputs;
@@ -14,7 +16,7 @@ import frc.team2225.robot.command.Teleop;
 import static frc.team2225.robot.subsystem.Drivetrain.Position.*;
 
 public class Drivetrain extends Subsystem {
-    int P, I, D = 1;
+
     int integral, previous_error, setpoint = 0;
     public enum Position {
         FRONT_LEFT, FRONT_RIGHT, BACK_LEFT, BACK_RIGHT
@@ -27,22 +29,23 @@ public class Drivetrain extends Subsystem {
     public static final double _wheelCircumferenceCm = 6 * 2.54 * Math.PI;
     public static final double _motorRotsPerWheelRot = 16;
     public static final int _countsPerMotorRot = 40;
-
+    final double kI = 0, kP = 0, kD = 0;
     public static final int deadZone = 100;
     int resetTargetRot;
     double targetRot;
-
+    PID pidWrite = new PID();
     public TalonSRX[] motors;
     public ADXRS450_Gyro gyro;
-
+    final PIDController turnController;
     public Drivetrain(int frontLeft, int frontRight, int backLeft, int backRight, SPI.Port gyro) {
         motors = new TalonSRX[4];
         motors[FRONT_LEFT.ordinal()] = new TalonSRX(frontLeft);
         motors[FRONT_RIGHT.ordinal()] = new TalonSRX(frontRight);
         motors[BACK_LEFT.ordinal()] = new TalonSRX(backLeft);
         motors[BACK_RIGHT.ordinal()] = new TalonSRX(backRight);
-        public final PIDController PID;
+        final double I= 0, P=0, D = 0;
         this.gyro = new ADXRS450_Gyro(gyro);
+        turnController = new PIDController(P,I,D, this.gyro, pidWrite);
         targetRot = 0;
         motorOf(FRONT_RIGHT).setInverted(true);
         motorOf(BACK_RIGHT).setInverted(true);
@@ -68,20 +71,30 @@ public class Drivetrain extends Subsystem {
         return motors[position.ordinal()];
     }
 
+
+
     public void omniDrive(Vector2D translate, double rotateIn) {
+
         translate.mapSquareToDiamond().divide(Math.sqrt(2) / 2);
-        final double p = 1.0/150.0;
+
         double fr, fl, br, bl;
+        double rotate = 0;
+        if(rotateIn != 0) {
+            resetTargetRot = 10;
+            rotate = -rotateIn;
+        }
+        if(resetTargetRot > 0) {
+            targetRot = gyro.getAngle();
+            resetTargetRot--;
+        }
+        if(rotateIn == 0 && resetTargetRot <= 0) {
+            rotate = Math.max(-1, Math.min(pidWrite.output ,1));
+        }
         fl = translate.dot(frontLeftVec);
         fr = translate.dot(frontRightVec);
         bl = translate.dot(backLeftVec);
         br = translate.dot(backRightVec);
-        PID = new PIDController(kP, kI, kD, gyro, this);
 
-        PID.setInputRange(180.0f, -180.0f);
-        PID.setOutputRange(.45, -.45);
-        PID.setAbsoluteTolerance(2.0f);
-        PID.setContinuous();
 
         fl = ScaleInputs.padMinValue(rotateIn, fl, false) + rotateIn;
         fr = ScaleInputs.padMinValue(rotateIn, fr, false) - rotateIn;
@@ -145,6 +158,12 @@ public class Drivetrain extends Subsystem {
         }
 
     }
-
+    public class PID implements PIDOutput{
+        public double output;
+        @Override
+        public void pidWrite(double output) {
+            this.output = output;
+        }
+    }
 
 }

@@ -199,6 +199,13 @@ public class Drivetrain extends Subsystem {
         motorOutputs[BACK_RIGHT.ordinal()].setDouble(br);
     }
 
+    /**
+     * Stop the robot
+     */
+    public void stop() {
+        omniDrive(Vector2D.zero(), 0);
+    }
+
     @Override
     protected void initDefaultCommand() {
         setDefaultCommand(new Teleop());

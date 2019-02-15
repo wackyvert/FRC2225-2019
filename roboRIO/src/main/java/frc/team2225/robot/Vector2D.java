@@ -75,6 +75,10 @@ public class Vector2D {
         return new Vector2D(1, 0);
     }
 
+    public static Vector2D zero() {
+        return new Vector2D(0, 0);
+    }
+
     /**
      * Rotate a vector in Cartesian space.
      *

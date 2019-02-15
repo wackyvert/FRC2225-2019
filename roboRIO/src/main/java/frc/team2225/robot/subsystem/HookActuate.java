@@ -1,4 +1,4 @@
-package frc.team2225.robot.command;
+package frc.team2225.robot.subsystem;
 
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.command.Subsystem;

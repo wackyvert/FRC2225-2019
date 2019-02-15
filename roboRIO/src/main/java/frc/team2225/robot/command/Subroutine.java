@@ -57,4 +57,19 @@ public abstract class Subroutine extends Command {
 
         boolean isDone();
     }
+
+    abstract class TimedStage implements Stage {
+        long startTime;
+        long duration;
+
+        public TimedStage(long durationMs) {
+            startTime = System.currentTimeMillis();
+            duration = durationMs;
+        }
+
+        @Override
+        public boolean isDone() {
+            return System.currentTimeMillis() > startTime + duration;
+        }
+    }
 }

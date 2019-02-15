@@ -54,7 +54,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-
+    new MoveForward().start();
   }
 
   /**
@@ -80,7 +80,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testInit() {
-    new MoveForward().start();
+
   }
 
   /**

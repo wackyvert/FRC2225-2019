@@ -1,5 +1,6 @@
 package frc.team2225.robot.command;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.command.Command;
 import frc.team2225.robot.Robot;
 import frc.team2225.robot.Vector2D;
@@ -15,12 +16,13 @@ public class MoveForward extends Command {
 
     @Override
     protected void initialize() {
+        DriverStation.reportWarning("Started", false);
         pos = Robot.drivetrain.translate(new Vector2D(0, 10));
     }
 
     @Override
     protected void execute() {
-        System.out.println(pos.isDone());
+        DriverStation.reportWarning(pos.toString(), false);
     }
 
     @Override

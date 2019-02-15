@@ -46,6 +46,11 @@ public class Drivetrain extends Subsystem {
     public static final int acceleration = cruiseVelocity;
 
     private ShuffleboardTab tab = Shuffleboard.getTab("Drivetrain");
+
+    private NetworkTableEntry[] motorOutputs;
+    private NetworkTableEntry yOutput = tab.add("Joystick Y", 0).getEntry();
+    private NetworkTableEntry xOutput = tab.add("Joystick X", 0).getEntry();
+
     private NetworkTableEntry pChooser = tab.add("kP", 0).getEntry();
     private NetworkTableEntry iChooser = tab.add("kI", 0).getEntry();
     private NetworkTableEntry dChooser = tab.add("kD", 0).getEntry();
@@ -83,10 +88,15 @@ public class Drivetrain extends Subsystem {
 
     public Drivetrain(int frontLeft, int frontRight, int backLeft, int backRight, SPI.Port gyro) {
         motors = new TalonSRX[4];
+        motorOutputs = new NetworkTableEntry[4];
         motors[FRONT_LEFT.ordinal()] = new TalonSRX(frontLeft);
+        motorOutputs[FRONT_LEFT.ordinal()] = tab.add("Front Left Output", 0).getEntry();
         motors[FRONT_RIGHT.ordinal()] = new TalonSRX(frontRight);
+        motorOutputs[FRONT_RIGHT.ordinal()] = tab.add("Front Right Output", 0).getEntry();
         motors[BACK_LEFT.ordinal()] = new TalonSRX(backLeft);
+        motorOutputs[BACK_LEFT.ordinal()] = tab.add("Back Left Output", 0).getEntry();
         motors[BACK_RIGHT.ordinal()] = new TalonSRX(backRight);
+        motorOutputs[BACK_RIGHT.ordinal()] = tab.add("Back Right Output", 0).getEntry();
         this.gyro = new ADXRS450_Gyro(gyro);
 
         for (TalonSRX motor : motors) {
@@ -168,9 +178,13 @@ public class Drivetrain extends Subsystem {
 
     public void setMotorVoltage(double fl, double fr, double bl, double br) {
         motorOf(FRONT_LEFT).set(ControlMode.PercentOutput, fl);
+        motorOutputs[FRONT_LEFT.ordinal()].setDouble(fl);
         motorOf(FRONT_RIGHT).set(ControlMode.PercentOutput, fr);
+        motorOutputs[FRONT_RIGHT.ordinal()].setDouble(fr);
         motorOf(BACK_LEFT).set(ControlMode.PercentOutput, bl);
+        motorOutputs[BACK_LEFT.ordinal()].setDouble(bl);
         motorOf(BACK_RIGHT).set(ControlMode.PercentOutput, br);
+        motorOutputs[BACK_RIGHT.ordinal()].setDouble(br);
     }
 
     @Override
@@ -202,6 +216,13 @@ public class Drivetrain extends Subsystem {
             return false;
         }
 
+        @Override
+        public String toString() {
+            return "fl: " + (fl - motorOf(FRONT_LEFT).getSelectedSensorPosition()) +
+                    ", fr: " + (fr - motorOf(FRONT_RIGHT).getSelectedSensorPosition()) +
+                    ", bl: " + (bl - motorOf(BACK_LEFT).getSelectedSensorPosition()) +
+                    ", br: " + (br - motorOf(BACK_RIGHT).getSelectedSensorPosition());
+        }
     }
 
 

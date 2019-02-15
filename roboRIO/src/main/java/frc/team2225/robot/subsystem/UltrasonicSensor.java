@@ -10,7 +10,7 @@ public class UltrasonicSensor extends Subsystem {
     ShuffleboardTab tab = Shuffleboard.getTab("Ultrasonic Sensor");
     NetworkTableEntry distance = tab.add("Distance", 0).getEntry();
     AnalogInput sensorPort;
-    final double scalar = 1;
+    final double scalar = 50 * 2.54;
 
     public UltrasonicSensor(int portNumber) {
         sensorPort = new AnalogInput(0);
@@ -27,6 +27,6 @@ public class UltrasonicSensor extends Subsystem {
     }
 
     public double getDistance() {
-        return scalar * sensorPort.getAverageVoltage();
+        return (sensorPort.getAverageVoltage() - .07) * scalar;
     }
 }

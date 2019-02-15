@@ -130,6 +130,12 @@ public class Drivetrain extends Subsystem {
         return motors[position.ordinal()];
     }
 
+    /**
+     * Drive the robot by setting the output voltage
+     *
+     * @param translate A vector which describes the desired movement direction. Units are percent output [0, 1]
+     * @param rotateIn  The desired rotation amount (positive is clockwise)
+     */
     public void omniDrive(Vector2D translate, double rotateIn) {
         // TODO: test and use rotate instead of rotateIn
         translate.mapSquareToDiamond().divide(Math.sqrt(2) / 2);
@@ -165,6 +171,11 @@ public class Drivetrain extends Subsystem {
         return (int)(cm / _wheelCircumferenceCm * _motorRotsPerWheelRot * _countsPerMotorRot);
     }
 
+    /**
+     * Used to drive the robot autonomously a certain distance
+     * @param v The desired distance of translation (units are centimeters)
+     * @return A CheckPosition object that can be used to see if the movement has completed
+     */
     public CheckPosition translate(Vector2D v){
         int fl = motorOf(FRONT_LEFT).getSelectedSensorPosition() + cmToCounts(v.dot(frontLeftVec));
         int fr = motorOf(FRONT_RIGHT).getSelectedSensorPosition() + cmToCounts(v.dot(frontRightVec));

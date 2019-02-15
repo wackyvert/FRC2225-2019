@@ -4,6 +4,13 @@ import edu.wpi.first.wpilibj.command.Command;
 
 import java.util.List;
 
+/**
+ * A state machine that can be run in periodically in an iterative environment
+ * <p>
+ * Consists of Stages, which are initialized, run until they are done, and then finalized in order
+ * <p>
+ * To create a subroutine, override the getStages method to return a list of stages
+ */
 public abstract class Subroutine extends Command {
     private Stage[] stages;
     private boolean isFinished = false;
@@ -11,8 +18,8 @@ public abstract class Subroutine extends Command {
 
     @Override
     protected void initialize() {
-        stages[0].init();
         this.stages = (Stage[]) getStages().toArray();
+        stages[0].init();
     }
 
     @Override
@@ -44,6 +51,9 @@ public abstract class Subroutine extends Command {
         return isFinished;
     }
 
+    /**
+     * A stage in a Subroutine
+     */
     interface Stage {
 
         default void init() {
@@ -58,6 +68,9 @@ public abstract class Subroutine extends Command {
         boolean isDone();
     }
 
+    /**
+     * Creates a stage that finishes after a set duration
+     */
     abstract class TimedStage implements Stage {
         long startTime;
         long duration;
@@ -67,9 +80,13 @@ public abstract class Subroutine extends Command {
             duration = durationMs;
         }
 
+        protected boolean isDurationExpired() {
+            return System.currentTimeMillis() > startTime + duration;
+        }
+
         @Override
         public boolean isDone() {
-            return System.currentTimeMillis() > startTime + duration;
+            return isDurationExpired();
         }
     }
 }

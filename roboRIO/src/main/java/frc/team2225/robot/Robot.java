@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.command.Scheduler;
 import frc.team2225.robot.command.MoveForward;
 import frc.team2225.robot.command.Teleop;
 import frc.team2225.robot.subsystem.Drivetrain;
+import frc.team2225.robot.subsystem.RollerIntake;
 import frc.team2225.robot.subsystem.UltrasonicSensor;
 
 /**
@@ -18,6 +19,7 @@ import frc.team2225.robot.subsystem.UltrasonicSensor;
  */
 public class Robot extends TimedRobot {
   public static Drivetrain drivetrain;
+    public static RollerIntake rollerIntake;
   public static UltrasonicSensor ultrasonicSensor;
   /**
    * This function is run when the robot is first started up and should be
@@ -26,6 +28,8 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
     drivetrain = new Drivetrain(4, 5, 2, 6, SPI.Port.kOnboardCS0);
+      //TODO: Find the IDs for the roller intake motors
+      rollerIntake = new RollerIntake(0, 1);
     ultrasonicSensor = new UltrasonicSensor(0);
   }
 

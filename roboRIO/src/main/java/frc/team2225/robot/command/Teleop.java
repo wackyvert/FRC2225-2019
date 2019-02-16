@@ -1,14 +1,20 @@
 package frc.team2225.robot.command;
 
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.command.Command;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import frc.team2225.robot.Robot;
 import frc.team2225.robot.ScaleInputs;
 import frc.team2225.robot.Vector2D;
 
 public class Teleop extends Command {
     private static XboxController joystick = new XboxController(0);
+
+    private static ShuffleboardLayout layout = Robot.debugTab.getLayout("Joystick");
+    private static NetworkTableEntry yOutput = layout.add("Joystick Y", 0).getEntry();
+    private static NetworkTableEntry xOutput = layout.add("Joystick X", 0).getEntry();
 
     public Teleop() {
         requires(Robot.drivetrain);

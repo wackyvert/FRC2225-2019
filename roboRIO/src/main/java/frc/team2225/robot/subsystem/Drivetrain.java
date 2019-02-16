@@ -4,23 +4,25 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.command.Subsystem;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
+import frc.team2225.robot.Robot;
 import frc.team2225.robot.ScaleInputs;
 import frc.team2225.robot.Vector2D;
 import frc.team2225.robot.command.Teleop;
+
+import java.util.function.BiConsumer;
 
 import static frc.team2225.robot.subsystem.Drivetrain.Position.*;
 
 public class Drivetrain extends Subsystem {
 
-    int integral, previous_error, setpoint = 0;
     public enum Position {
         FRONT_LEFT, FRONT_RIGHT, BACK_LEFT, BACK_RIGHT
     }
@@ -32,11 +34,13 @@ public class Drivetrain extends Subsystem {
     public static final double _wheelCircumferenceCm = 6 * 2.54 * Math.PI;
     public static final double _motorRotsPerWheelRot = 16;
     public static final int _countsPerMotorRot = 40;
-    double kI = 0, kP = 0, kD = 0;
+
     public static final int deadZone = 100;
+
     int resetTargetRot;
     double targetRot;
-    PID pidWrite = new PID();
+
+    PidCallback pidWrite = new PidCallback();
 
     // Units: counts / 100ms
     public static final int maxVelocity = 100;
@@ -49,38 +53,28 @@ public class Drivetrain extends Subsystem {
     //Accelerate to cruise in 1 second
     public static final int acceleration = cruiseVelocity;
 
-    private ShuffleboardTab tab = Shuffleboard.getTab("Drivetrain");
+    private ShuffleboardLayout drivePid = Robot.debugTab.getLayout("Drivetrain PID");
+    private ShuffleboardLayout gyroPid = Robot.debugTab.getLayout("Gyro PID");
+    private ShuffleboardLayout drivetrainOutputs = Robot.debugTab.getLayout("Drivetrain Outputs");
 
-    private NetworkTableEntry[] motorOutputs;
-    private NetworkTableEntry yOutput = tab.add("Joystick Y", 0).getEntry();
-    private NetworkTableEntry xOutput = tab.add("Joystick X", 0).getEntry();
+    private NetworkTableEntry[] motorOutputs = new NetworkTableEntry[4];
 
-    private NetworkTableEntry pChooser = tab.add("kP", 0).getEntry();
-    private NetworkTableEntry iChooser = tab.add("kI", 0).getEntry();
-    private NetworkTableEntry dChooser = tab.add("kD", 0).getEntry();
+    private NetworkTableEntry pChooser = drivePid.add("kP", 0).getEntry();
+    private NetworkTableEntry iChooser = drivePid.add("kI", 0).getEntry();
+    private NetworkTableEntry dChooser = drivePid.add("kD", 0).getEntry();
+    private NetworkTableEntry fChooser = drivePid.add("kF", fGain).getEntry();
+    private NetworkTableEntry izChooser = drivePid.add("iZone", 0).getEntry();
 
-    @Override
-    public void periodic() {
-        if (kP != pChooser.getDouble(0)) {
-            kP = pChooser.getDouble(0);
+    private NetworkTableEntry gpChooser = gyroPid.add("kP", 0).getEntry();
+    private NetworkTableEntry giChooser = gyroPid.add("kI", 0).getEntry();
+    private NetworkTableEntry gdChooser = gyroPid.add("kD", 0).getEntry();
+
+    private void setMotorParam(NetworkTableEntry slot, BiConsumer<TalonSRX, Double> method) {
+        slot.addListener(change -> {
             for (TalonSRX motor : motors) {
-                motor.config_kP(0, kP);
+                method.accept(motor, change.value.getDouble());
             }
-        }
-
-        if (kI != iChooser.getDouble(0)) {
-            kI = iChooser.getDouble(0);
-            for (TalonSRX motor : motors) {
-                motor.config_kI(0, kI);
-            }
-        }
-
-        if (kD != dChooser.getDouble(0)) {
-            kD = dChooser.getDouble(0);
-            for (TalonSRX motor : motors) {
-                motor.config_kD(0, kD);
-            }
-        }
+        }, EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
     }
 
     public TalonSRX[] motors;
@@ -89,16 +83,22 @@ public class Drivetrain extends Subsystem {
     public Drivetrain(int frontLeft, int frontRight, int backLeft, int backRight, SPI.Port gyro) {
         motors = new TalonSRX[4];
         motors[FRONT_LEFT.ordinal()] = new TalonSRX(frontLeft);
-        motorOutputs[FRONT_LEFT.ordinal()] = tab.add("Front Left Output", 0).getEntry();
         motors[FRONT_RIGHT.ordinal()] = new TalonSRX(frontRight);
-        motorOutputs[FRONT_RIGHT.ordinal()] = tab.add("Front Right Output", 0).getEntry();
         motors[BACK_LEFT.ordinal()] = new TalonSRX(backLeft);
-        motorOutputs[BACK_LEFT.ordinal()] = tab.add("Back Left Output", 0).getEntry();
         motors[BACK_RIGHT.ordinal()] = new TalonSRX(backRight);
-        final double I= 0, P=0, D = 0;
-        motorOutputs[BACK_RIGHT.ordinal()] = tab.add("Back Right Output", 0).getEntry();
+        for (Position position : Position.values()) {
+            motorOutputs[position.ordinal()] = drivetrainOutputs.add(position.name() + " Output", 0).getEntry();
+        }
         this.gyro = new ADXRS450_Gyro(gyro);
-        turnController = new PIDController(P,I,D, this.gyro, pidWrite);
+        setMotorParam(pChooser, (m, p) -> m.config_kP(0, p));
+        setMotorParam(iChooser, (m, i) -> m.config_kI(0, i));
+        setMotorParam(dChooser, (m, d) -> m.config_kD(0, d));
+        setMotorParam(fChooser, (m, f) -> m.config_kF(0, f));
+        setMotorParam(izChooser, (m, iz) -> m.config_IntegralZone(0, iz.intValue()));
+        turnController = new PIDController(0, 0, 0, this.gyro, pidWrite);
+        gpChooser.addListener(v -> turnController.setP(v.value.getDouble()), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
+        giChooser.addListener(v -> turnController.setI(v.value.getDouble()), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
+        gdChooser.addListener(v -> turnController.setD(v.value.getDouble()), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
 
         for (TalonSRX motor : motors) {
             motor.configFactoryDefault();
@@ -110,10 +110,8 @@ public class Drivetrain extends Subsystem {
             motor.configPeakOutputReverse(-1);
 
             motor.selectProfileSlot(0, 0);
-            motor.config_kP(0, kP);
-            motor.config_kI(0, kI);
-            motor.config_kD(0, kD);
             motor.config_IntegralZone(0, 0);
+            motor.config_kF(0, fGain);
 
             motor.configMotionCruiseVelocity(cruiseVelocity);
             motor.configMotionAcceleration(acceleration);
@@ -243,7 +241,8 @@ public class Drivetrain extends Subsystem {
                     ", br: " + (br - motorOf(BACK_RIGHT).getSelectedSensorPosition());
         }
     }
-    public class PID implements PIDOutput{
+
+    public class PidCallback implements PIDOutput {
         public double output;
         @Override
         public void pidWrite(double output) {

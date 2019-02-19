@@ -4,13 +4,10 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
-import edu.wpi.first.wpilibj.PIDController;
-import edu.wpi.first.wpilibj.PIDOutput;
-import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.command.Subsystem;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import frc.team2225.robot.Robot;
 import frc.team2225.robot.ScaleInputs;
@@ -53,9 +50,9 @@ public class Drivetrain extends Subsystem {
     //Accelerate to cruise in 1 second
     public static final int acceleration = cruiseVelocity;
 
-    private ShuffleboardLayout drivePid = Robot.debugTab.getLayout("Drivetrain PID");
-    private ShuffleboardLayout gyroPid = Robot.debugTab.getLayout("Gyro PID");
-    private ShuffleboardLayout drivetrainOutputs = Robot.debugTab.getLayout("Drivetrain Outputs");
+    private ShuffleboardLayout drivePid = Robot.debugTab.getLayout("Drivetrain PID", BuiltInLayouts.kList.getLayoutName());
+    private ShuffleboardLayout gyroPid = Robot.debugTab.getLayout("Gyro PID", BuiltInLayouts.kList.getLayoutName());
+    private ShuffleboardLayout drivetrainOutputs = Robot.debugTab.getLayout("Drivetrain Outputs", BuiltInLayouts.kGrid.getLayoutName());
 
     private NetworkTableEntry[] motorOutputs = new NetworkTableEntry[4];
 
@@ -68,13 +65,20 @@ public class Drivetrain extends Subsystem {
     private NetworkTableEntry gpChooser = gyroPid.add("kP", 0).getEntry();
     private NetworkTableEntry giChooser = gyroPid.add("kI", 0).getEntry();
     private NetworkTableEntry gdChooser = gyroPid.add("kD", 0).getEntry();
+    private NetworkTableEntry gyroPos = gyroPid.add("Position", 0).getEntry();
+
+    @Override
+    public void periodic() {
+        gyroPos.setDouble(this.gyro.getAngle());
+        DriverStation.reportWarning("Gyro Angle: " + this.gyro.getAngle(), false);
+    }
 
     private void setMotorParam(NetworkTableEntry slot, BiConsumer<TalonSRX, Double> method) {
         slot.addListener(change -> {
             for (TalonSRX motor : motors) {
                 method.accept(motor, change.value.getDouble());
             }
-        }, EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
+        }, Robot.updateFlags);
     }
 
     public TalonSRX[] motors;
@@ -90,15 +94,21 @@ public class Drivetrain extends Subsystem {
             motorOutputs[position.ordinal()] = drivetrainOutputs.add(position.name() + " Output", 0).getEntry();
         }
         this.gyro = new ADXRS450_Gyro(gyro);
+        this.gyro.calibrate();
+        DriverStation.reportWarning("Gyro: " + this.gyro.isConnected() + ", " + this.gyro.getAngle(), false);
         setMotorParam(pChooser, (m, p) -> m.config_kP(0, p));
         setMotorParam(iChooser, (m, i) -> m.config_kI(0, i));
         setMotorParam(dChooser, (m, d) -> m.config_kD(0, d));
         setMotorParam(fChooser, (m, f) -> m.config_kF(0, f));
         setMotorParam(izChooser, (m, iz) -> m.config_IntegralZone(0, iz.intValue()));
         turnController = new PIDController(0, 0, 0, this.gyro, pidWrite);
-        gpChooser.addListener(v -> turnController.setP(v.value.getDouble()), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
-        giChooser.addListener(v -> turnController.setI(v.value.getDouble()), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
-        gdChooser.addListener(v -> turnController.setD(v.value.getDouble()), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
+        turnController.setOutputRange(-1, 1);
+        gpChooser.addListener(v -> {
+            turnController.setP(v.value.getDouble());
+            DriverStation.reportWarning("P Updated " + v.value.getDouble(), false);
+        }, Robot.updateFlags);
+        giChooser.addListener(v -> turnController.setI(v.value.getDouble()), Robot.updateFlags);
+        gdChooser.addListener(v -> turnController.setD(v.value.getDouble()), Robot.updateFlags);
 
         for (TalonSRX motor : motors) {
             motor.configFactoryDefault();
@@ -119,9 +129,9 @@ public class Drivetrain extends Subsystem {
 
         targetRot = 0;
         motorOf(FRONT_RIGHT).setInverted(true);
-        motorOf(BACK_RIGHT).setInverted(true);
+        motorOf(BACK_RIGHT).setInverted(false);
         motorOf(FRONT_LEFT).setInverted(false);
-        motorOf(BACK_LEFT).setInverted(false);
+        motorOf(BACK_LEFT).setInverted(true);
     }
 
     public TalonSRX motorOf(Position position) {
@@ -137,7 +147,6 @@ public class Drivetrain extends Subsystem {
     public void omniDrive(Vector2D translate, double rotateIn) {
         // TODO: test and use rotate instead of rotateIn
         translate.mapSquareToDiamond().divide(Math.sqrt(2) / 2);
-        final double p = 1.0/150.0;
         double fr, fl, br, bl;
         double rotate = 0;
         if(rotateIn != 0) {
@@ -157,10 +166,10 @@ public class Drivetrain extends Subsystem {
         br = translate.dot(backRightVec);
 
 
-        fl = ScaleInputs.padMinValue(rotateIn, fl, false) + rotateIn;
-        fr = ScaleInputs.padMinValue(rotateIn, fr, false) - rotateIn;
-        bl = ScaleInputs.padMinValue(rotateIn, bl, false) + rotateIn;
-        br = ScaleInputs.padMinValue(rotateIn, br, false) - rotateIn;
+        fl = ScaleInputs.padMinValue(rotateIn, fl, false) + rotate;
+        fr = ScaleInputs.padMinValue(rotateIn, fr, false) - rotate;
+        bl = ScaleInputs.padMinValue(rotateIn, bl, false) + rotate;
+        br = ScaleInputs.padMinValue(rotateIn, br, false) - rotate;
 
         setMotorVoltage(fl, fr, bl, br);
     }
@@ -247,6 +256,7 @@ public class Drivetrain extends Subsystem {
         @Override
         public void pidWrite(double output) {
             this.output = output;
+            DriverStation.reportWarning("PID Updated: " + output, false);
         }
     }
 

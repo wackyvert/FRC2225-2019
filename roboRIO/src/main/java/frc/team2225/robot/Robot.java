@@ -1,6 +1,6 @@
 package frc.team2225.robot;
 
-import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Scheduler;
@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.team2225.robot.command.MoveForward;
 import frc.team2225.robot.command.Teleop;
 import frc.team2225.robot.subsystem.Drivetrain;
+import frc.team2225.robot.subsystem.Elevator;
 import frc.team2225.robot.subsystem.RollerIntake;
 import frc.team2225.robot.subsystem.UltrasonicSensor;
 
@@ -23,6 +24,8 @@ public class Robot extends TimedRobot {
     public static Drivetrain drivetrain;
     public static RollerIntake rollerIntake;
     public static UltrasonicSensor ultrasonicSensor;
+    public static Elevator elevator;
+    public static final int updateFlags = EntryListenerFlags.kUpdate | EntryListenerFlags.kNew | EntryListenerFlags.kImmediate;
 
     public static ShuffleboardTab mainTab = Shuffleboard.getTab("Main");
     public static ShuffleboardTab debugTab = Shuffleboard.getTab("Debug");
@@ -35,7 +38,8 @@ public class Robot extends TimedRobot {
     public void robotInit() {
         drivetrain = new Drivetrain(2, 1, 3, 4, SPI.Port.kOnboardCS0);
         //TODO: Find the IDs for the roller intake motors
-        rollerIntake = new RollerIntake(0, 1);
+        rollerIntake = new RollerIntake(0, 1, 0);
+        elevator = new Elevator(10);
         ultrasonicSensor = new UltrasonicSensor(0);
     }
 
@@ -50,7 +54,6 @@ public class Robot extends TimedRobot {
     @Override
     public void robotPeriodic() {
         Scheduler.getInstance().run();
-        DriverStation.reportWarning("Distance " + ultrasonicSensor.getDistance(), false);
     }
 
     /**

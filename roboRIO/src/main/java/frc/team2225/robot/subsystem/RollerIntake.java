@@ -1,16 +1,18 @@
 package frc.team2225.robot.subsystem;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import edu.wpi.first.wpilibj.Relay;
+import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.command.Subsystem;
 
 public class RollerIntake extends Subsystem {
-    TalonSRX left;
-    TalonSRX right;
+    VictorSP left;
+    VictorSP right;
+    Relay spike;
 
-    public RollerIntake(int left, int right) {
-        this.left = new TalonSRX(left);
-        this.right = new TalonSRX(right);
+    public RollerIntake(int left, int right, int wincher) {
+        this.left = new VictorSP(left);
+        this.right = new VictorSP(right);
+        this.spike = new Relay(wincher, Relay.Direction.kBoth);
     }
 
     @Override
@@ -18,23 +20,30 @@ public class RollerIntake extends Subsystem {
 
     }
 
-    public void grab(boolean on) {
-        right.set(ControlMode.PercentOutput, on ? 1 : 0);
-        left.set(ControlMode.PercentOutput, on ? 1 : 0);
+    public void grab() {
+        right.set(1);
+        left.set(1);
     }
 
-    public void push(boolean on) {
-        right.set(ControlMode.PercentOutput, on ? -1 : 0);
-        left.set(ControlMode.PercentOutput, on ? -1 : 0);
+    public void push() {
+        right.set(-1);
+        left.set(-1);
     }
 
-    public void curvedPush(boolean on, boolean isLeft) {
-        if (isLeft) {
-            right.set(ControlMode.PercentOutput, on ? -0.5 : 0);
-            left.set(ControlMode.PercentOutput, on ? -1 : 0);
-        } else {
-            right.set(ControlMode.PercentOutput, on ? -1 : 0);
-            left.set(ControlMode.PercentOutput, on ? -0.5 : 0);
-        }
+    public void stopGrab() {
+        left.set(0);
+        right.set(0);
+    }
+
+    public void lift() {
+        spike.set(Relay.Value.kForward);
+    }
+
+    public void drop() {
+        spike.set(Relay.Value.kReverse);
+    }
+
+    public void stopLift() {
+        spike.set(Relay.Value.kOff);
     }
 }

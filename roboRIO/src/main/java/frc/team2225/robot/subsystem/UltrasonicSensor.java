@@ -3,11 +3,12 @@ package frc.team2225.robot.subsystem;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.command.Subsystem;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import frc.team2225.robot.Robot;
 
 public class UltrasonicSensor extends Subsystem {
-    ShuffleboardLayout layout = Robot.debugTab.getLayout("Ultrasonic Sensor");
+    ShuffleboardLayout layout = Robot.debugTab.getLayout("Ultrasonic Sensor", BuiltInLayouts.kList.getLayoutName());
     NetworkTableEntry distance = layout.add("Distance", 0).getEntry();
     AnalogInput sensorPort;
     final double scalar = 50 * 2.54;

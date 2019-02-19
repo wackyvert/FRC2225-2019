@@ -4,11 +4,13 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
 import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.command.Subsystem;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import frc.team2225.robot.Robot;
+
+import static frc.team2225.robot.subsystem.Elevator.Level.*;
 
 public class Elevator extends Subsystem {
 
@@ -22,30 +24,46 @@ public class Elevator extends Subsystem {
 
     //Accelerate to cruise in 0.5 second
     public static final int acceleration = cruiseVelocity / 2;
+    boolean manualOutput = false;
 
     public enum Level {
-        TOP(0), MID(0), BOT(0);
+        BOT_HATCH(true), BOT_BALL(false), MID_HATCH(true), MID_BALL(false), TOP_HATCH(true), TOP_BALL(false);
 
-        double[] level;
+        NetworkTableEntry[] level;
+        boolean isHatch;
 
-        Level(double level) {
-            this.level = new double[]{level};
+        Level(boolean isHatch) {
+            this.isHatch = isHatch;
+            this.level = new NetworkTableEntry[1];
+        }
+
+        public static Level changeLevel(Level currentLevel, boolean isHatch, boolean moveUp) {
+            int delta = moveUp ? 1 : -1;
+            for (int ord = currentLevel.ordinal() + delta; ord < Level.values().length && ord >= 0; ord += delta) {
+                Level next = Level.values()[ord];
+                if (next.isHatch == isHatch)
+                    return next;
+            }
+            return currentLevel;
         }
     }
 
     private TalonSRX motor;
     private double kP = 0, kI = 0, kD = 0;
 
-    private ShuffleboardLayout pidLayout = Robot.debugTab.getLayout("Elevator PID");
-    private ShuffleboardLayout levelLayout = Robot.debugTab.getLayout("Elevator Levels");
+    private ShuffleboardLayout pidLayout = Robot.debugTab.getLayout("Elevator PID", BuiltInLayouts.kList.getLayoutName());
+    private ShuffleboardLayout levelLayout = Robot.debugTab.getLayout("Elevator Levels", BuiltInLayouts.kList.getLayoutName());
 
     private NetworkTableEntry pChooser = pidLayout.add("kP", 0).getEntry();
     private NetworkTableEntry iChooser = pidLayout.add("kI", 0).getEntry();
     private NetworkTableEntry dChooser = pidLayout.add("kD", 0).getEntry();
 
-    private NetworkTableEntry topSet = levelLayout.add("Top Level", 0).getEntry();
-    private NetworkTableEntry midSet = levelLayout.add("Middle Level", 0).getEntry();
-    private NetworkTableEntry botSet = levelLayout.add("Bottom Level", 0).getEntry();
+    private NetworkTableEntry ballTop = levelLayout.add("Top Ball Level", 0).getEntry();
+    private NetworkTableEntry hatchTop = levelLayout.add("Top Hatch Level", 0).getEntry();
+    private NetworkTableEntry ballMid = levelLayout.add("Middle Ball Level", 0).getEntry();
+    private NetworkTableEntry hatchMid = levelLayout.add("Middle Hatch Level", 0).getEntry();
+    private NetworkTableEntry ballBot = levelLayout.add("Bottom Ball Level", 0).getEntry();
+    private NetworkTableEntry hatchBot = levelLayout.add("Bottom Hatch Level", 0).getEntry();
     private NetworkTableEntry currentSet = levelLayout.add("Current Level", 0).getEntry();
 
 
@@ -59,11 +77,32 @@ public class Elevator extends Subsystem {
         currentSet.setDouble(motor.getSelectedSensorPosition());
     }
 
+    public boolean wasOutputSetManual() {
+        return manualOutput;
+    }
+
     public void setPosition(Level level) {
-        motor.set(ControlMode.Position, level.level[0]);
+        manualOutput = false;
+        motor.set(ControlMode.Position, level.level[0].getValue().getDouble());
+    }
+
+    public void setOutput(double output) {
+        manualOutput = true;
+        motor.set(ControlMode.PercentOutput, output);
+    }
+
+    private void initEnum() {
+        TOP_BALL.level[0] = ballTop;
+        MID_BALL.level[0] = ballMid;
+        BOT_BALL.level[0] = ballBot;
+        TOP_HATCH.level[0] = hatchTop;
+        MID_HATCH.level[0] = hatchMid;
+        BOT_HATCH.level[0] = hatchBot;
     }
 
     public Elevator(int port) {
+        initEnum();
+
         motor = new TalonSRX(port);
         motor.configFactoryDefault();
         motor.selectProfileSlot(0, 0);
@@ -72,12 +111,8 @@ public class Elevator extends Subsystem {
         motor.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen);
         motor.configClearPositionOnLimitR(true, 0);
 
-        pChooser.addListener(v -> motor.config_kP(0, v.value.getDouble()), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
-        iChooser.addListener(v -> motor.config_kI(0, v.value.getDouble()), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
-        dChooser.addListener(v -> motor.config_kD(0, v.value.getDouble()), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
-
-        topSet.addListener(v -> Level.TOP.level[0] = v.value.getDouble(), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
-        midSet.addListener(v -> Level.MID.level[0] = v.value.getDouble(), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
-        botSet.addListener(v -> Level.BOT.level[0] = v.value.getDouble(), EntryListenerFlags.kUpdate | EntryListenerFlags.kNew);
+        pChooser.addListener(v -> motor.config_kP(0, v.value.getDouble()), Robot.updateFlags);
+        iChooser.addListener(v -> motor.config_kI(0, v.value.getDouble()), Robot.updateFlags);
+        dChooser.addListener(v -> motor.config_kD(0, v.value.getDouble()), Robot.updateFlags);
     }
 }

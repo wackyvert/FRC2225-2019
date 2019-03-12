@@ -99,7 +99,7 @@ public class Robot extends TimedRobot {
 
     @Override
     public void testInit() {
-
+        drivetrain.gyro.calibrate();
     }
 
     /**

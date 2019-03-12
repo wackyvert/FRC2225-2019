@@ -4,7 +4,6 @@ import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.command.Subsystem;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 public class Elevator extends Subsystem {
 
@@ -45,14 +44,6 @@ public class Elevator extends Subsystem {
     private TalonSRX motor;
     private double kP = 0, kI = 0, kD = 0;
 
-/*
-    private NetworkTableEntry pChooser = pidLayout.add("kP", 0).getEntry();
-    private NetworkTableEntry iChooser = pidLayout.add("kI", 0).getEntry();
-    private NetworkTableEntry dChooser = pidLayout.add("kD", 0).getEntry();
-*/
-
-    private NetworkTableEntry level = Shuffleboard.getTab("Main").add("Elevator Level", 0).getEntry();
-
 
     @Override
     protected void initDefaultCommand() {
@@ -61,11 +52,6 @@ public class Elevator extends Subsystem {
 
     public void reset() {
         motor.setSelectedSensorPosition(0);
-    }
-
-    @Override
-    public void periodic() {
-        level.setDouble(motor.getSelectedSensorPosition());
     }
 
     public boolean wasOutputSetManual() {

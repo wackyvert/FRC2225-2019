@@ -5,8 +5,12 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.wpilibj.*;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PIDOutput;
+import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.command.Subsystem;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import frc.team2225.robot.Robot;
 import frc.team2225.robot.ScaleInputs;
 import frc.team2225.robot.Vector2D;
@@ -17,6 +21,8 @@ import java.util.function.BiConsumer;
 import static frc.team2225.robot.subsystem.Drivetrain.Position.*;
 
 public class Drivetrain extends Subsystem {
+
+    boolean gyroEnable;
 
     public enum Position {
         FRONT_LEFT, FRONT_RIGHT, BACK_LEFT, BACK_RIGHT
@@ -35,8 +41,6 @@ public class Drivetrain extends Subsystem {
     int resetTargetRot;
     double targetRot;
 
-    PIDCallback pidWrite = new PIDCallback();
-
     // Units: counts / 100ms
     public static final int maxVelocity = 100;
 
@@ -48,26 +52,16 @@ public class Drivetrain extends Subsystem {
     //Accelerate to cruise in 1 second
     public static final int acceleration = cruiseVelocity;
 
-    /*private ShuffleboardLayout drivePid = Robot.debugTab.getLayout("Drivetrain PID", BuiltInLayouts.kList.getLayoutName());
-    private ShuffleboardLayout gyroPid = Robot.debugTab.getLayout("Gyro PID", BuiltInLayouts.kList.getLayoutName());
-    private ShuffleboardLayout drivetrainOutputs = Robot.debugTab.getLayout("Drivetrain Outputs", BuiltInLayouts.kGrid.getLayoutName());
+    private NetworkTableEntry gyroVal = Shuffleboard.getTab("Main").add("Gyro Val", 0).getEntry();
+    private NetworkTableEntry gyroOut = Shuffleboard.getTab("Main").add("Gyro Out", 0).getEntry();
+    /*private NetworkTableEntry pOut = Shuffleboard.getTab("Main").add("P Out", 0).getEntry();
+    private NetworkTableEntry dOut = Shuffleboard.getTab("Main").add("D Out", 0).getEntry();*/
 
-    private NetworkTableEntry[] motorOutputs = new NetworkTableEntry[4];
-
-    private NetworkTableEntry pChooser = drivePid.add("kP", 0).getEntry();
-    private NetworkTableEntry iChooser = drivePid.add("kI", 0).getEntry();
-    private NetworkTableEntry dChooser = drivePid.add("kD", 0).getEntry();
-    private NetworkTableEntry fChooser = drivePid.add("kF", fGain).getEntry();
-    private NetworkTableEntry izChooser = drivePid.add("iZone", 0).getEntry();
-
-    private NetworkTableEntry gpChooser = gyroPid.add("kP", 0).getEntry();
-    private NetworkTableEntry giChooser = gyroPid.add("kI", 0).getEntry();
-    private NetworkTableEntry gdChooser = gyroPid.add("kD", 0).getEntry();
-    private NetworkTableEntry gyroPos = gyroPid.add("Position", 0).getEntry();*/
+    private NetworkTableEntry gyroEnableNet = Shuffleboard.getTab("Main").add("Gyro Enable", true).getEntry();
 
     @Override
     public void periodic() {
-
+        gyroVal.setDouble(gyro.getAngle());
     }
 
     private void setMotorParam(NetworkTableEntry slot, BiConsumer<TalonSRX, Double> method) {
@@ -80,8 +74,8 @@ public class Drivetrain extends Subsystem {
 
     public TalonSRX[] motors;
     public ADXRS450_Gyro gyro;
-    final PIDController turnController;
     public Drivetrain(int frontLeft, int frontRight, int backLeft, int backRight, SPI.Port gyro) {
+        gyroEnable = true;
         motors = new TalonSRX[4];
         motors[FRONT_LEFT.ordinal()] = new TalonSRX(frontLeft);
         motors[FRONT_RIGHT.ordinal()] = new TalonSRX(frontRight);
@@ -98,8 +92,6 @@ public class Drivetrain extends Subsystem {
         setMotorParam(dChooser, (m, d) -> m.config_kD(0, d));
         setMotorParam(fChooser, (m, f) -> m.config_kF(0, f));
         setMotorParam(izChooser, (m, iz) -> m.config_IntegralZone(0, iz.intValue()));*/
-        turnController = new PIDController(0, 0, 0, this.gyro, pidWrite);
-        turnController.setOutputRange(-1, 1);
         /*gpChooser.addListener(v -> {
             turnController.setP(v.value.getDouble());
             DriverStation.reportWarning("P Updated " + v.value.getDouble(), false);
@@ -131,6 +123,15 @@ public class Drivetrain extends Subsystem {
         motorOf(BACK_LEFT).setInverted(true);
     }
 
+    public void setGyroEnable(boolean enable) {
+        gyroEnable = enable;
+        gyroEnableNet.setBoolean(enable);
+    }
+
+    public void toggleGyroEnable() {
+        setGyroEnable(!gyroEnable);
+    }
+
     public TalonSRX motorOf(Position position) {
         return motors[position.ordinal()];
     }
@@ -142,11 +143,19 @@ public class Drivetrain extends Subsystem {
      * @param rotateIn  The desired rotation amount (positive is clockwise)
      */
     public void omniDrive(Vector2D translate, double rotateIn) {
+        final double p = 0.025;
+        final double d = 0.002;
         // TODO: test and use rotate instead of rotateIn
         translate.mapSquareToDiamond().divide(Math.sqrt(2) / 2);
         double fr, fl, br, bl;
+        fl = translate.dot(frontLeftVec);
+        fr = translate.dot(frontRightVec);
+        bl = translate.dot(backLeftVec);
+        br = translate.dot(backRightVec);
+
+        boolean controllerInputIsPresent = Math.abs(rotateIn) > 0.1;
         double rotate = 0;
-        if(rotateIn != 0) {
+        if (controllerInputIsPresent) {
             resetTargetRot = 10;
             rotate = rotateIn;
         }
@@ -154,20 +163,22 @@ public class Drivetrain extends Subsystem {
             targetRot = gyro.getAngle();
             resetTargetRot--;
         }
-        if(rotateIn == 0 && resetTargetRot <= 0) {
-            rotate = Math.max(-1, Math.min(pidWrite.output ,1));
+        if (!controllerInputIsPresent && gyroEnable) {
+            double pTerm = resetTargetRot > 0 ? 0 : -(gyro.getAngle() - targetRot) * p;
+//            pOut.setDouble(pTerm);
+            double dTerm = gyro.getRate() * d;
+//            dOut.setDouble(dTerm);
+            dTerm = Math.copySign(Math.max(0, Math.abs(dTerm) - 0.1), dTerm);
+            rotate = pTerm + dTerm;
+            rotate = Math.max(-0.5, Math.min(rotate, 0.5));
+            gyroOut.setDouble(rotate);
         }
-        fl = translate.dot(frontLeftVec);
-        fr = translate.dot(frontRightVec);
-        bl = translate.dot(backLeftVec);
-        br = translate.dot(backRightVec);
 
 
         fl = ScaleInputs.padMinValue(rotateIn, fl, false) + rotate;
         fr = ScaleInputs.padMinValue(rotateIn, fr, false) - rotate;
         bl = ScaleInputs.padMinValue(rotateIn, bl, false) + rotate;
         br = ScaleInputs.padMinValue(rotateIn, br, false) - rotate;
-
         setMotorVoltage(fl, fr, bl, br);
     }
 

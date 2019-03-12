@@ -8,8 +8,10 @@ import frc.team2225.robot.ScaleInputs;
 import frc.team2225.robot.Vector2D;
 import frc.team2225.robot.subsystem.Elevator.Level;
 
+@SuppressWarnings("Duplicates")
 public class Teleop extends Command {
     private static XboxController joystick = new XboxController(0);
+    //private static XboxController secondary = new XboxController(1);
 
     /*private static ShuffleboardLayout layout = Robot.debugTab.getLayout("Joystick", BuiltInLayouts.kList.getLayoutName());
     private static NetworkTableEntry yOutput = layout.add("Joystick Y", 0).getEntry();
@@ -18,6 +20,11 @@ public class Teleop extends Command {
     boolean rightTriggerPrevious = false;
     boolean leftTriggerPrevious = false;
     Level currentLevel = Level.BOT_BALL;
+
+    @Override
+    protected void initialize() {
+        Robot.drivetrain.gyro.reset();
+    }
 
     public Teleop() {
         requires(Robot.drivetrain);
@@ -57,8 +64,8 @@ public class Teleop extends Command {
             Robot.rollerIntake.stopLift();
         }
 
-        if (joystick.getBackButton()) {
-            Robot.elevator.reset();
+        if (joystick.getBackButtonPressed()) {
+            Robot.drivetrain.toggleGyroEnable();
         }
 
         /*if (joystick.getBumperPressed(Hand.kLeft)) {

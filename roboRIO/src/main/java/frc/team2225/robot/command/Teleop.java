@@ -11,7 +11,7 @@ import frc.team2225.robot.subsystem.Elevator.Level;
 @SuppressWarnings("Duplicates")
 public class Teleop extends Command {
     private static XboxController joystick = new XboxController(0);
-    //private static XboxController secondary = new XboxController(1);
+    private static XboxController secondary = new XboxController(1);
 
     /*private static ShuffleboardLayout layout = Robot.debugTab.getLayout("Joystick", BuiltInLayouts.kList.getLayoutName());
     private static NetworkTableEntry yOutput = layout.add("Joystick Y", 0).getEntry();
@@ -42,29 +42,35 @@ public class Teleop extends Command {
 
         double elevate = ScaleInputs.scaleInputs(joystick.getTriggerAxis(Hand.kRight) - joystick.getTriggerAxis(Hand.kLeft),
                 0.02, 0.5, 2.0);
+
+        if (elevate == 0) {
+            elevate = ScaleInputs.scaleInputs(secondary.getTriggerAxis(Hand.kRight) - secondary.getTriggerAxis(Hand.kLeft),
+                    0.02, 0.5, 2.0);
+        }
+
         if (elevate != 0) {
             Robot.elevator.setOutput(elevate);
         } else if (Robot.elevator.wasOutputSetManual()) {
             Robot.elevator.setOutput(0);
         }
 
-        if (joystick.getAButton()) {
+        if (joystick.getAButton() || secondary.getAButton()) {
             Robot.rollerIntake.grab();
-        } else if (joystick.getBButton()) {
+        } else if (joystick.getBButton() || secondary.getBButton()) {
             Robot.rollerIntake.push();
         } else {
             Robot.rollerIntake.stopGrab();
         }
 
-        if (joystick.getYButton()) {
+        if (joystick.getYButton() || secondary.getYButton()) {
             Robot.rollerIntake.lift();
-        } else if (joystick.getXButton()) {
+        } else if (joystick.getXButton() || secondary.getXButton()) {
             Robot.rollerIntake.drop();
         } else {
             Robot.rollerIntake.stopLift();
         }
 
-        if (joystick.getBackButtonPressed()) {
+        if (joystick.getBackButtonPressed() || secondary.getBackButtonPressed()) {
             Robot.drivetrain.toggleGyroEnable();
         }
 

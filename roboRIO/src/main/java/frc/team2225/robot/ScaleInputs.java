@@ -39,7 +39,7 @@ public final class ScaleInputs {
      * @return The scaled output
      */
     public static double scaleInputs(double valIn) {
-        return scaleInputs(valIn, 0.2, 0.3, 2);
+        return scaleInputs(valIn, 0.2, 0.2, 2);
     }
 
     /**

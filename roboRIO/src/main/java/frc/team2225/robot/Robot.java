@@ -1,5 +1,7 @@
 package frc.team2225.robot;
 
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -26,6 +28,7 @@ public class Robot extends TimedRobot {
     public static UltrasonicSensor ultrasonicSensor;
     public static Elevator elevator;
     public static final int updateFlags = EntryListenerFlags.kUpdate | EntryListenerFlags.kNew | EntryListenerFlags.kImmediate;
+    public static CameraServer cameraServer;
 
     public static ShuffleboardTab mainTab = Shuffleboard.getTab("Main");
     public static ShuffleboardTab debugTab = Shuffleboard.getTab("Debug");
@@ -36,11 +39,15 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void robotInit() {
-        drivetrain = new Drivetrain(2, 1, 3, 4, SPI.Port.kOnboardCS0);
+        drivetrain = new Drivetrain(2, 1, 3, 4, SPI.Port.kOnboardCS1);
         //TODO: Find the IDs for the roller intake motors
-        rollerIntake = new RollerIntake(0, 1, 0);
-        elevator = new Elevator(10);
+        rollerIntake = new RollerIntake(1, 0, 0);
+        elevator = new Elevator(5);
         ultrasonicSensor = new UltrasonicSensor(0);
+        cameraServer = CameraServer.getInstance();
+        UsbCamera camera = cameraServer.startAutomaticCapture();
+        camera.setFPS(30);
+        camera.setResolution(320, 240);
     }
 
     /**

@@ -37,7 +37,7 @@ public class Drivetrain extends Subsystem {
     int resetTargetRot;
     double targetRot;
 
-    PidCallback pidWrite = new PidCallback();
+    PIDCallback pidWrite = new PIDCallback();
 
     // Units: counts / 100ms
     public static final int maxVelocity = 100;
@@ -69,8 +69,7 @@ public class Drivetrain extends Subsystem {
 
     @Override
     public void periodic() {
-        gyroPos.setDouble(this.gyro.getAngle());
-        DriverStation.reportWarning("Gyro Angle: " + this.gyro.getAngle(), false);
+
     }
 
     private void setMotorParam(NetworkTableEntry slot, BiConsumer<TalonSRX, Double> method) {
@@ -94,7 +93,7 @@ public class Drivetrain extends Subsystem {
             motorOutputs[position.ordinal()] = drivetrainOutputs.add(position.name() + " Output", 0).getEntry();
         }
         this.gyro = new ADXRS450_Gyro(gyro);
-        this.gyro.calibrate();
+        Robot.debugTab.add("Gyro", this.gyro);
         DriverStation.reportWarning("Gyro: " + this.gyro.isConnected() + ", " + this.gyro.getAngle(), false);
         setMotorParam(pChooser, (m, p) -> m.config_kP(0, p));
         setMotorParam(iChooser, (m, i) -> m.config_kI(0, i));
@@ -128,7 +127,7 @@ public class Drivetrain extends Subsystem {
         }
 
         targetRot = 0;
-        motorOf(FRONT_RIGHT).setInverted(true);
+        motorOf(FRONT_RIGHT).setInverted(false);
         motorOf(BACK_RIGHT).setInverted(false);
         motorOf(FRONT_LEFT).setInverted(false);
         motorOf(BACK_LEFT).setInverted(true);
@@ -151,7 +150,7 @@ public class Drivetrain extends Subsystem {
         double rotate = 0;
         if(rotateIn != 0) {
             resetTargetRot = 10;
-            rotate = -rotateIn;
+            rotate = rotateIn;
         }
         if(resetTargetRot > 0) {
             targetRot = gyro.getAngle();
@@ -251,7 +250,7 @@ public class Drivetrain extends Subsystem {
         }
     }
 
-    public class PidCallback implements PIDOutput {
+    public class PIDCallback implements PIDOutput {
         public double output;
         @Override
         public void pidWrite(double output) {

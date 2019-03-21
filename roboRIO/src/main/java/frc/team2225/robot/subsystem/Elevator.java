@@ -3,6 +3,7 @@ package frc.team2225.robot.subsystem;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
 import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.command.Subsystem;
@@ -65,6 +66,7 @@ public class Elevator extends Subsystem {
     private NetworkTableEntry ballBot = levelLayout.add("Bottom Ball Level", 0).getEntry();
     private NetworkTableEntry hatchBot = levelLayout.add("Bottom Hatch Level", 0).getEntry();
     private NetworkTableEntry currentSet = levelLayout.add("Current Level", 0).getEntry();
+    private NetworkTableEntry currentLevel = levelLayout.add("Enum Level", "Unknown").getEntry();
 
 
     @Override
@@ -81,14 +83,20 @@ public class Elevator extends Subsystem {
         return manualOutput;
     }
 
+    public void zero() {
+        motor.setSelectedSensorPosition(0);
+    }
+
     public void setPosition(Level level) {
         manualOutput = false;
+        currentLevel.setString(level.name());
         motor.set(ControlMode.Position, level.level[0].getValue().getDouble());
     }
 
     public void setOutput(double output) {
         manualOutput = true;
-        motor.set(ControlMode.PercentOutput, output);
+        currentLevel.setString("Manual");
+        motor.set(ControlMode.PercentOutput, output * 0.7);
     }
 
     private void initEnum() {
@@ -105,6 +113,9 @@ public class Elevator extends Subsystem {
 
         motor = new TalonSRX(port);
         motor.configFactoryDefault();
+        motor.configOpenloopRamp(0.5);
+        motor.setNeutralMode(NeutralMode.Brake);
+        motor.setInverted(true);
         motor.selectProfileSlot(0, 0);
         motor.config_kF(0, fGain);
         motor.config_IntegralZone(0, 0);

@@ -6,8 +6,6 @@ import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Scheduler;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import frc.team2225.robot.command.MoveForward;
 import frc.team2225.robot.command.Teleop;
 import frc.team2225.robot.subsystem.Drivetrain;
@@ -30,8 +28,8 @@ public class Robot extends TimedRobot {
     public static final int updateFlags = EntryListenerFlags.kUpdate | EntryListenerFlags.kNew | EntryListenerFlags.kImmediate;
     public static CameraServer cameraServer;
 
-    public static ShuffleboardTab mainTab = Shuffleboard.getTab("Main");
-    public static ShuffleboardTab debugTab = Shuffleboard.getTab("Debug");
+    /*public static ShuffleboardTab mainTab = Shuffleboard.getTab("Main");
+    public static ShuffleboardTab debugTab = Shuffleboard.getTab("Debug");*/
 
     /**
      * This function is run when the robot is first started up and should be
@@ -45,8 +43,8 @@ public class Robot extends TimedRobot {
         elevator = new Elevator(5);
         ultrasonicSensor = new UltrasonicSensor(0);
         cameraServer = CameraServer.getInstance();
-        UsbCamera camera = cameraServer.startAutomaticCapture();
-        camera.setFPS(30);
+        UsbCamera camera = cameraServer.startAutomaticCapture(0);
+        camera.setFPS(15);
         camera.setResolution(320, 240);
     }
 
@@ -54,8 +52,8 @@ public class Robot extends TimedRobot {
      * This function is called every robot packet, no matter the mode. Use
      * this for items like diagnostics that you want ran during disabled,
      * autonomous, teleoperated and test.
-     *
-     * <p>This runs after the mode specific periodic functions, but before
+     * <p>
+     * This runs after the mode specific periodic functions, but before
      * LiveWindow and SmartDashboard integrated updating.
      */
     @Override

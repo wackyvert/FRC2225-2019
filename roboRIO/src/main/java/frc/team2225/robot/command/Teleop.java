@@ -1,11 +1,8 @@
 package frc.team2225.robot.command;
 
-import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.command.Command;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import frc.team2225.robot.Robot;
 import frc.team2225.robot.ScaleInputs;
 import frc.team2225.robot.Vector2D;
@@ -14,10 +11,10 @@ import frc.team2225.robot.subsystem.Elevator.Level;
 public class Teleop extends Command {
     private static XboxController joystick = new XboxController(0);
 
-    private static ShuffleboardLayout layout = Robot.debugTab.getLayout("Joystick", BuiltInLayouts.kList.getLayoutName());
+    /*private static ShuffleboardLayout layout = Robot.debugTab.getLayout("Joystick", BuiltInLayouts.kList.getLayoutName());
     private static NetworkTableEntry yOutput = layout.add("Joystick Y", 0).getEntry();
     private static NetworkTableEntry xOutput = layout.add("Joystick X", 0).getEntry();
-    private static NetworkTableEntry rotateOutput = layout.add("Joystick Rot", 0).getEntry();
+    private static NetworkTableEntry rotateOutput = layout.add("Joystick Rot", 0).getEntry();*/
     boolean rightTriggerPrevious = false;
     boolean leftTriggerPrevious = false;
     Level currentLevel = Level.BOT_BALL;
@@ -36,9 +33,9 @@ public class Teleop extends Command {
         rotate = ScaleInputs.scaleInputs(rotate, 0.2, 0.15, 4);
         Robot.drivetrain.omniDrive(translate, rotate);
 
-        xOutput.setDouble(translate.x);
+        /*xOutput.setDouble(translate.x);
         yOutput.setDouble(translate.y);
-        rotateOutput.setDouble(rotate);
+        rotateOutput.setDouble(rotate);*/
 
         int pov = joystick.getPOV();
         if (pov == 0) {

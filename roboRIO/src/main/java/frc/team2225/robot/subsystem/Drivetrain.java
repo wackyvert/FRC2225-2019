@@ -7,8 +7,6 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.command.Subsystem;
-import edu.wpi.first.wpilibj.shuffleboard.BuiltInLayouts;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import frc.team2225.robot.Robot;
 import frc.team2225.robot.ScaleInputs;
 import frc.team2225.robot.Vector2D;
@@ -50,7 +48,7 @@ public class Drivetrain extends Subsystem {
     //Accelerate to cruise in 1 second
     public static final int acceleration = cruiseVelocity;
 
-    private ShuffleboardLayout drivePid = Robot.debugTab.getLayout("Drivetrain PID", BuiltInLayouts.kList.getLayoutName());
+    /*private ShuffleboardLayout drivePid = Robot.debugTab.getLayout("Drivetrain PID", BuiltInLayouts.kList.getLayoutName());
     private ShuffleboardLayout gyroPid = Robot.debugTab.getLayout("Gyro PID", BuiltInLayouts.kList.getLayoutName());
     private ShuffleboardLayout drivetrainOutputs = Robot.debugTab.getLayout("Drivetrain Outputs", BuiltInLayouts.kGrid.getLayoutName());
 
@@ -65,7 +63,7 @@ public class Drivetrain extends Subsystem {
     private NetworkTableEntry gpChooser = gyroPid.add("kP", 0).getEntry();
     private NetworkTableEntry giChooser = gyroPid.add("kI", 0).getEntry();
     private NetworkTableEntry gdChooser = gyroPid.add("kD", 0).getEntry();
-    private NetworkTableEntry gyroPos = gyroPid.add("Position", 0).getEntry();
+    private NetworkTableEntry gyroPos = gyroPid.add("Position", 0).getEntry();*/
 
     @Override
     public void periodic() {
@@ -89,25 +87,25 @@ public class Drivetrain extends Subsystem {
         motors[FRONT_RIGHT.ordinal()] = new TalonSRX(frontRight);
         motors[BACK_LEFT.ordinal()] = new TalonSRX(backLeft);
         motors[BACK_RIGHT.ordinal()] = new TalonSRX(backRight);
-        for (Position position : Position.values()) {
+        /*for (Position position : Position.values()) {
             motorOutputs[position.ordinal()] = drivetrainOutputs.add(position.name() + " Output", 0).getEntry();
-        }
+        }*/
         this.gyro = new ADXRS450_Gyro(gyro);
-        Robot.debugTab.add("Gyro", this.gyro);
+        /*Robot.debugTab.add("Gyro", this.gyro);
         DriverStation.reportWarning("Gyro: " + this.gyro.isConnected() + ", " + this.gyro.getAngle(), false);
         setMotorParam(pChooser, (m, p) -> m.config_kP(0, p));
         setMotorParam(iChooser, (m, i) -> m.config_kI(0, i));
         setMotorParam(dChooser, (m, d) -> m.config_kD(0, d));
         setMotorParam(fChooser, (m, f) -> m.config_kF(0, f));
-        setMotorParam(izChooser, (m, iz) -> m.config_IntegralZone(0, iz.intValue()));
+        setMotorParam(izChooser, (m, iz) -> m.config_IntegralZone(0, iz.intValue()));*/
         turnController = new PIDController(0, 0, 0, this.gyro, pidWrite);
         turnController.setOutputRange(-1, 1);
-        gpChooser.addListener(v -> {
+        /*gpChooser.addListener(v -> {
             turnController.setP(v.value.getDouble());
             DriverStation.reportWarning("P Updated " + v.value.getDouble(), false);
         }, Robot.updateFlags);
         giChooser.addListener(v -> turnController.setI(v.value.getDouble()), Robot.updateFlags);
-        gdChooser.addListener(v -> turnController.setD(v.value.getDouble()), Robot.updateFlags);
+        gdChooser.addListener(v -> turnController.setD(v.value.getDouble()), Robot.updateFlags);*/
 
         for (TalonSRX motor : motors) {
             motor.configFactoryDefault();
@@ -196,13 +194,13 @@ public class Drivetrain extends Subsystem {
 
     public void setMotorVoltage(double fl, double fr, double bl, double br) {
         motorOf(FRONT_LEFT).set(ControlMode.PercentOutput, fl);
-        motorOutputs[FRONT_LEFT.ordinal()].setDouble(fl);
+//        motorOutputs[FRONT_LEFT.ordinal()].setDouble(fl);
         motorOf(FRONT_RIGHT).set(ControlMode.PercentOutput, fr);
-        motorOutputs[FRONT_RIGHT.ordinal()].setDouble(fr);
+//        motorOutputs[FRONT_RIGHT.ordinal()].setDouble(fr);
         motorOf(BACK_LEFT).set(ControlMode.PercentOutput, bl);
-        motorOutputs[BACK_LEFT.ordinal()].setDouble(bl);
+//        motorOutputs[BACK_LEFT.ordinal()].setDouble(bl);
         motorOf(BACK_RIGHT).set(ControlMode.PercentOutput, br);
-        motorOutputs[BACK_RIGHT.ordinal()].setDouble(br);
+//        motorOutputs[BACK_RIGHT.ordinal()].setDouble(br);
     }
 
     /**

@@ -1,12 +1,10 @@
 package frc.team2225.robot.subsystem;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
-import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
-import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.command.Subsystem;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 public class Elevator extends Subsystem {
 
@@ -47,21 +45,13 @@ public class Elevator extends Subsystem {
     private TalonSRX motor;
     private double kP = 0, kI = 0, kD = 0;
 
-    /*private ShuffleboardLayout pidLayout = Robot.debugTab.getLayout("Elevator PID", BuiltInLayouts.kList.getLayoutName());
-    private ShuffleboardLayout levelLayout = Robot.debugTab.getLayout("Elevator Levels", BuiltInLayouts.kList.getLayoutName());
-
+/*
     private NetworkTableEntry pChooser = pidLayout.add("kP", 0).getEntry();
     private NetworkTableEntry iChooser = pidLayout.add("kI", 0).getEntry();
     private NetworkTableEntry dChooser = pidLayout.add("kD", 0).getEntry();
+*/
 
-    private NetworkTableEntry ballTop = levelLayout.add("Top Ball Level", 0).getEntry();
-    private NetworkTableEntry hatchTop = levelLayout.add("Top Hatch Level", 0).getEntry();
-    private NetworkTableEntry ballMid = levelLayout.add("Middle Ball Level", 0).getEntry();
-    private NetworkTableEntry hatchMid = levelLayout.add("Middle Hatch Level", 0).getEntry();
-    private NetworkTableEntry ballBot = levelLayout.add("Bottom Ball Level", 0).getEntry();
-    private NetworkTableEntry hatchBot = levelLayout.add("Bottom Hatch Level", 0).getEntry();
-    private NetworkTableEntry currentSet = levelLayout.add("Current Level", 0).getEntry();
-    private NetworkTableEntry currentLevel = levelLayout.add("Enum Level", "Unknown").getEntry();*/
+    private NetworkTableEntry level = Shuffleboard.getTab("Main").add("Elevator Level", 0).getEntry();
 
 
     @Override
@@ -69,9 +59,13 @@ public class Elevator extends Subsystem {
 
     }
 
+    public void reset() {
+        motor.setSelectedSensorPosition(0);
+    }
+
     @Override
     public void periodic() {
-//        currentSet.setDouble(motor.getSelectedSensorPosition());
+        level.setDouble(motor.getSelectedSensorPosition());
     }
 
     public boolean wasOutputSetManual() {
@@ -91,21 +85,10 @@ public class Elevator extends Subsystem {
     public void setOutput(double output) {
         manualOutput = true;
 //        currentLevel.setString("Manual");
-        motor.set(ControlMode.PercentOutput, output * 0.7);
-    }
-
-    private void initEnum() {
-/*        TOP_BALL.level[0] = ballTop;
-        MID_BALL.level[0] = ballMid;
-        BOT_BALL.level[0] = ballBot;
-        TOP_HATCH.level[0] = hatchTop;
-        MID_HATCH.level[0] = hatchMid;
-        BOT_HATCH.level[0] = hatchBot;*/
+        motor.set(ControlMode.PercentOutput, output);
     }
 
     public Elevator(int port) {
-        initEnum();
-
         motor = new TalonSRX(port);
         motor.configFactoryDefault();
         motor.configOpenloopRamp(0.5);
@@ -115,6 +98,8 @@ public class Elevator extends Subsystem {
         motor.config_kF(0, fGain);
         motor.config_IntegralZone(0, 0);
         motor.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen);
+        motor.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, 0);
+        motor.setSensorPhase(true);
         motor.configClearPositionOnLimitR(true, 0);
 
 //        pChooser.addListener(v -> motor.config_kP(0, v.value.getDouble()), Robot.updateFlags);

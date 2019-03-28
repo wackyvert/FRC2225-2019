@@ -6,7 +6,6 @@ import edu.wpi.first.networktables.EntryListenerFlags;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.command.Scheduler;
-import frc.team2225.robot.command.MoveForward;
 import frc.team2225.robot.command.Teleop;
 import frc.team2225.robot.subsystem.Drivetrain;
 import frc.team2225.robot.subsystem.Elevator;
@@ -74,7 +73,7 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void autonomousInit() {
-        new MoveForward().start();
+        teleopInit();
     }
 
     /**
@@ -82,7 +81,7 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void autonomousPeriodic() {
-
+        teleopPeriodic();
     }
 
     /**

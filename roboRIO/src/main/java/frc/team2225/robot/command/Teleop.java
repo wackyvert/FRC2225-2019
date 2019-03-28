@@ -33,22 +33,17 @@ public class Teleop extends Command {
         rotate = ScaleInputs.scaleInputs(rotate, 0.2, 0.15, 4);
         Robot.drivetrain.omniDrive(translate, rotate);
 
-        /*xOutput.setDouble(translate.x);
-        yOutput.setDouble(translate.y);
-        rotateOutput.setDouble(rotate);*/
-
-        int pov = joystick.getPOV();
-        if (pov == 0) {
-            Robot.elevator.setOutput(1);
-        } else if (pov == 180) {
-            Robot.elevator.setOutput(-1);
+        double elevate = ScaleInputs.scaleInputs(joystick.getTriggerAxis(Hand.kRight) - joystick.getTriggerAxis(Hand.kLeft),
+                0.02, 0.5, 2.0);
+        if (elevate != 0) {
+            Robot.elevator.setOutput(elevate);
         } else if (Robot.elevator.wasOutputSetManual()) {
             Robot.elevator.setOutput(0);
         }
 
-        if (getTrigger(Hand.kLeft)) {
+        if (joystick.getAButton()) {
             Robot.rollerIntake.grab();
-        } else if (getTrigger(Hand.kRight)) {
+        } else if (joystick.getBButton()) {
             Robot.rollerIntake.push();
         } else {
             Robot.rollerIntake.stopGrab();
@@ -62,7 +57,11 @@ public class Teleop extends Command {
             Robot.rollerIntake.stopLift();
         }
 
-        if (joystick.getBumperPressed(Hand.kLeft)) {
+        if (joystick.getBackButton()) {
+            Robot.elevator.reset();
+        }
+
+        /*if (joystick.getBumperPressed(Hand.kLeft)) {
             Robot.elevator.setPosition(Level.changeLevel(currentLevel, true, false));
         } else if (joystick.getBumperPressed(Hand.kRight)) {
             Robot.elevator.setPosition(Level.changeLevel(currentLevel, true, true));
@@ -70,10 +69,7 @@ public class Teleop extends Command {
             Robot.elevator.setPosition(Level.changeLevel(currentLevel, false, false));
         } else if (false) {
             Robot.elevator.setPosition(Level.changeLevel(currentLevel, false, true));
-        }
-
-        leftTriggerPrevious = getTrigger(Hand.kLeft);
-        rightTriggerPrevious = getTrigger(Hand.kRight);
+        }*/
     }
 
     private boolean getTrigger(Hand hand) {

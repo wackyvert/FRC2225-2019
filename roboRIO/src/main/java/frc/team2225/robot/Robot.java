@@ -1,5 +1,6 @@
 package frc.team2225.robot;
 
+import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.EntryListenerFlags;
@@ -26,6 +27,9 @@ public class Robot extends TimedRobot {
     public static Elevator elevator;
     public static final int updateFlags = EntryListenerFlags.kUpdate | EntryListenerFlags.kNew | EntryListenerFlags.kImmediate;
     public static CameraServer cameraServer;
+    UsbCamera camera;
+    UsbCamera camera2;
+    CvSink sink;
 
     /*public static ShuffleboardTab mainTab = Shuffleboard.getTab("Main");
     public static ShuffleboardTab debugTab = Shuffleboard.getTab("Debug");*/
@@ -42,9 +46,22 @@ public class Robot extends TimedRobot {
         elevator = new Elevator(5);
         ultrasonicSensor = new UltrasonicSensor(0);
         cameraServer = CameraServer.getInstance();
-        UsbCamera camera = cameraServer.startAutomaticCapture(0);
+
+//        boolean mainCam = true;
+
+        camera = cameraServer.startAutomaticCapture(0);
         camera.setFPS(15);
         camera.setResolution(320, 240);
+
+        /*camera2 = new UsbCamera("Secondary", 1);
+        camera2.setFPS(15);
+        camera2.setResolution(320, 240);*/
+
+//        sink = cameraServer.getVideo();
+    }
+
+    public void toggleCamera() {
+
     }
 
     /**

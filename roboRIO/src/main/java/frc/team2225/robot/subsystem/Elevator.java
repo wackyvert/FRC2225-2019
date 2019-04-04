@@ -4,30 +4,40 @@ import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.command.Subsystem;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 
 public class Elevator extends Subsystem {
 
     // Units: counts / 100ms
-    public static final int maxVelocity = 100;
+    private static final int maxVelocity = 100;
 
-    public static final double fGain = 1023.0 / maxVelocity;
+    private static final double fGain = 1023.0 / maxVelocity;
 
     // Cruise Velocity = Max Velocity * 30%
-    public static final int cruiseVelocity = 30;
+    private static final int cruiseVelocity = 30;
 
     //Accelerate to cruise in 0.5 second
-    public static final int acceleration = cruiseVelocity / 2;
-    boolean manualOutput = false;
+    private static final int acceleration = cruiseVelocity / 2;
+
+
+    private boolean manualOutput = false;
+
+    NetworkTableEntry currentLevel = Shuffleboard.getTab("Main").add("Elevator Position", 0).getEntry();
 
     public enum Level {
-        BOT_HATCH(true), BOT_BALL(false), MID_HATCH(true), MID_BALL(false), TOP_HATCH(true), TOP_BALL(false);
+        BOT_HATCH(true, 0),
+        BOT_BALL(false, 0),
+        MID_HATCH(true, 0),
+        MID_BALL(false, 0),
+        TOP_HATCH(true, 0),
+        TOP_BALL(false, 0);
 
-        NetworkTableEntry[] level;
+        int level;
         boolean isHatch;
 
-        Level(boolean isHatch) {
+        Level(boolean isHatch, int position) {
             this.isHatch = isHatch;
-            this.level = new NetworkTableEntry[1];
+            this.level = position;
         }
 
         public static Level changeLevel(Level currentLevel, boolean isHatch, boolean moveUp) {
@@ -50,6 +60,11 @@ public class Elevator extends Subsystem {
 
     }
 
+    @Override
+    public void periodic() {
+        currentLevel.setDouble(motor.getSelectedSensorPosition());
+    }
+
     public void reset() {
         motor.setSelectedSensorPosition(0);
     }
@@ -65,7 +80,7 @@ public class Elevator extends Subsystem {
     public void setPosition(Level level) {
         manualOutput = false;
 //        currentLevel.setString(level.name());
-        motor.set(ControlMode.Position, level.level[0].getValue().getDouble());
+        motor.set(ControlMode.Position, level.level);
     }
 
     public void setOutput(double output) {
